@@ -8,6 +8,7 @@ Simulador y servicio de rutas para el reto SpookyThon 2026 en Manta, Ecuador. El
 - Sprint 2 completado: motor de turnos, tipos de zombi, eventos de ciudad y estado compartido en DynamoDB.
 - Sprint 3 completado: `POST /paso` autenticado calcula y conserva rutas seguras; el equipo verificó manualmente una latencia p95 de 252 ms.
 - Sprint 4 completado: mapa en vivo, rutas y bloqueos visibles, controles de turno y estado final de sobrevivientes en `web/`.
+- Sprint 5 completado: rondas locales 20/80/200, cuatro escenarios límite y métricas guardadas en [`reports/sprint-5/fire-drill-latest.json`](reports/sprint-5/fire-drill-latest.json).
 
 ## Mapa
 
@@ -59,6 +60,20 @@ npm run web:serve
 ```
 
 Después abre `http://127.0.0.1:4173`. No requiere instalar dependencias nuevas ni desplegar otra vez la infraestructura; necesita conexión al API desplegado. El servidor local solo escucha en `127.0.0.1`.
+
+## Sprint 5: prueba de fuego local
+
+Desde la raíz del repositorio, ejecuta:
+
+```powershell
+npm run fire-drill
+```
+
+El simulador ejecuta las rondas de 20, 80 y 200 sobrevivientes, con un máximo de 150 turnos (cinco minutos a dos segundos por turno). También revisa colapso de puente, bloqueo de avenida, despertar de dormidos y mordida por cruce opuesto. Imprime y guarda las métricas en `reports/sprint-5/fire-drill-latest.json`: supervivencia, eficiencia frente a la ruta más corta sin zombis, p95 y máximo del planificador local, recálculos, movimientos inválidos, errores y rondas incompletas.
+
+Última ronda local: 20 sobrevivientes, 90% de supervivencia y 100% de eficiencia; 80, 82.5% y 94.82%; 200, 97% y 94.7%. Las tres terminaron sin sobrevivientes activos, errores, movimientos inválidos ni tiempos agotados. El p95 local del planificador fue 0.069 ms, 0.581 ms y 0.203 ms, respectivamente. Los cuatro escenarios límite pasaron.
+
+La latencia de este informe mide el planificador local sin latencia de red. La medición HTTP manual previa de `POST /paso` fue p95 de 252 ms para 20 llamadas; el despliegue público se volverá a comprobar en el Sprint 6.
 
 La API key no se guarda en el repositorio ni en texto plano en AWS: CDK recibe su SHA-256 mediante `SIMULATOR_API_KEY_SHA256`. En PowerShell, genera y configura una clave localmente. Conserva `SIMULATOR_API_KEY` de forma privada para las llamadas autenticadas y no la subas al repositorio:
 

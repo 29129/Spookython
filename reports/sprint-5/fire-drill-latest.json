@@ -1,0 +1,108 @@
+{
+  "generatedAt": "2026-10-26T23:36:10.434Z",
+  "map": "Manta, Ecuador",
+  "mapVersion": "2026-10-26T20:31:31Z",
+  "source": "Simulación local determinista; latencia del planificador sin latencia de red AWS.",
+  "maxTurnsPerRound": 150,
+  "scenarios": [
+    {
+      "name": "BRIDGE_COLLAPSE",
+      "status": "PASSED",
+      "streetId": "osm:32491362:0"
+    },
+    {
+      "name": "AVENUE_BLOCK",
+      "status": "PASSED",
+      "streetId": "osm:32490884:0"
+    },
+    {
+      "name": "SLEEPER_WAKEUP",
+      "status": "PASSED",
+      "survivorStartNode": "osm:363647192",
+      "zombieNode": "osm:8267352169"
+    },
+    {
+      "name": "OPPOSITE_CROSSING",
+      "status": "PASSED",
+      "streetId": "osm:32308293:0",
+      "survivorStatus": "BITTEN"
+    }
+  ],
+  "rounds": [
+    {
+      "survivorCount": 20,
+      "turns": 12,
+      "durationSecondsAtGameSpeed": 24,
+      "completed": true,
+      "rescued": 18,
+      "bitten": 2,
+      "activeAtEnd": 0,
+      "survivalRatePercent": 90,
+      "meanRouteEfficiencyPercent": 100,
+      "rescuedWithEfficiencyBaseline": 18,
+      "routeDecisionCalls": 145,
+      "routeRecalculations": 1,
+      "routeDecisionLatencyMs": {
+        "p95": 0.069,
+        "max": 0.737
+      },
+      "routeDecisionsOver500Ms": 0,
+      "invalidMoves": 0,
+      "engineErrors": 0,
+      "timedOut": false,
+      "passed": true,
+      "localExecutionMs": 21.18,
+      "baselineSurvivors": 20
+    },
+    {
+      "survivorCount": 80,
+      "turns": 27,
+      "durationSecondsAtGameSpeed": 54,
+      "completed": true,
+      "rescued": 66,
+      "bitten": 14,
+      "activeAtEnd": 0,
+      "survivalRatePercent": 82.5,
+      "meanRouteEfficiencyPercent": 94.82,
+      "rescuedWithEfficiencyBaseline": 66,
+      "routeDecisionCalls": 604,
+      "routeRecalculations": 59,
+      "routeDecisionLatencyMs": {
+        "p95": 0.581,
+        "max": 1.374
+      },
+      "routeDecisionsOver500Ms": 0,
+      "invalidMoves": 0,
+      "engineErrors": 0,
+      "timedOut": false,
+      "passed": true,
+      "localExecutionMs": 91.51,
+      "baselineSurvivors": 80
+    },
+    {
+      "survivorCount": 200,
+      "turns": 16,
+      "durationSecondsAtGameSpeed": 32,
+      "completed": true,
+      "rescued": 194,
+      "bitten": 6,
+      "activeAtEnd": 0,
+      "survivalRatePercent": 97,
+      "meanRouteEfficiencyPercent": 94.7,
+      "rescuedWithEfficiencyBaseline": 194,
+      "routeDecisionCalls": 1479,
+      "routeRecalculations": 65,
+      "routeDecisionLatencyMs": {
+        "p95": 0.203,
+        "max": 0.763
+      },
+      "routeDecisionsOver500Ms": 0,
+      "invalidMoves": 0,
+      "engineErrors": 0,
+      "timedOut": false,
+      "passed": true,
+      "localExecutionMs": 147.7,
+      "baselineSurvivors": 200
+    }
+  ]
+}

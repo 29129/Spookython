@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsc --noEmit",
     "web:serve": "node scripts/serve-web.mjs",
+    "fire-drill": "node scripts/run-fire-drill.mjs",
     "map:build": "node scripts/build-map.mjs",
     "map:validate": "node scripts/validate-map.mjs",
     "synth": "cdk synth --strict",

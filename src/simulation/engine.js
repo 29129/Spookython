@@ -1,6 +1,7 @@
 const DEFAULT_WORLD_ID = 'manta-demo'
 const DEFAULT_SURVIVOR_COUNT = 20
 const CITY_EVENT_INTERVAL_TURNS = 10
+const { performance } = require('node:perf_hooks')
 const { planNextStep } = require('../routing/planner')
 
 function buildAdjacency(map, blockedStreetIds = []) {
@@ -14,15 +15,9 @@ function buildAdjacency(map, blockedStreetIds = []) {
   return adjacency
 }
 
-function cachedRouteForSurvivor(survivor, map) {
+function cachedRouteForSurvivor(survivor, map, streetByPair) {
   const routeNodeIds = survivor.routeNodeIds || []
   if (routeNodeIds.length < 2) return null
-
-  const streetByPair = new Map()
-  for (const street of map.streets) {
-    const key = [street.fromNode, street.toNode].sort().join('|')
-    if (!streetByPair.has(key)) streetByPair.set(key, street.id)
-  }
 
   const routeStreetIds = []
   for (let index = 0; index < routeNodeIds.length - 1; index += 1) {
@@ -97,7 +92,10 @@ function makeInitialZombies(map) {
   return zombies
 }
 
-function createInitialState(map, worldId = DEFAULT_WORLD_ID) {
+function createInitialState(map, worldId = DEFAULT_WORLD_ID, survivorCount = DEFAULT_SURVIVOR_COUNT) {
+  if (!Number.isInteger(survivorCount) || survivorCount < 1 || survivorCount > map.nodes.length) {
+    throw new RangeError(`survivorCount debe ser un entero entre 1 y ${map.nodes.length}.`)
+  }
   const zombies = makeInitialZombies(map)
   const adjacency = buildAdjacency(map)
   const dangerNodes = new Set(zombies.filter((zombie) => zombie.type !== 'SLEEPER').map((zombie) => zombie.nodeId))
@@ -106,8 +104,8 @@ function createInitialState(map, worldId = DEFAULT_WORLD_ID) {
   const survivors = []
   const usedStarts = new Set()
 
-  for (let index = 0; index < DEFAULT_SURVIVOR_COUNT; index += 1) {
-    const preferredIndex = Math.floor(((index + 0.5) * map.nodes.length) / DEFAULT_SURVIVOR_COUNT)
+  for (let index = 0; index < survivorCount; index += 1) {
+    const preferredIndex = Math.floor(((index + 0.5) * map.nodes.length) / survivorCount)
     const candidates = [
       ...map.nodes.slice(preferredIndex),
       ...map.nodes.slice(0, preferredIndex),
@@ -236,11 +234,16 @@ function nextCityEvent(requestedEvent, turn, state, map) {
   return event
 }
 
-function advanceWorld(currentState, map, requestedEvent) {
+function advanceWorld(currentState, map, requestedEvent, options = {}) {
   const state = structuredClone(currentState)
   const nextTurn = state.turn + 1
   const event = nextCityEvent(requestedEvent, nextTurn, state, map)
   const adjacency = buildAdjacency(map, state.blockedStreetIds)
+  const streetByPair = new Map()
+  for (const street of map.streets) {
+    const key = [street.fromNode, street.toNode].sort().join('|')
+    if (!streetByPair.has(key)) streetByPair.set(key, street.id)
+  }
   const activeSurvivors = state.survivors.filter((survivor) => survivor.status === 'ACTIVE')
 
   for (const sleeper of state.zombies) {
@@ -260,11 +263,17 @@ function advanceWorld(currentState, map, requestedEvent) {
   const survivorMovements = []
   for (const survivor of activeSurvivors) {
     if (survivor.status !== 'ACTIVE') continue
+    const decisionStartedAt = performance.now()
     const decision = planNextStep({
       sobrevivienteId: survivor.id,
       nodoActual: survivor.nodeId,
       turno: nextTurn,
-    }, map, state, cachedRouteForSurvivor(survivor, map))
+    }, map, state, cachedRouteForSurvivor(survivor, map, streetByPair))
+    options.onRouteDecision?.({
+      survivorId: survivor.id,
+      durationMs: performance.now() - decisionStartedAt,
+      cacheHit: decision.cacheHit,
+    })
     const nextNodeId = decision.siguienteNodo
     if (decision.routeCache) {
       const currentIndex = decision.routeCache.routeNodeIds.indexOf(survivor.nodeId)
