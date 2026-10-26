@@ -5,7 +5,9 @@ Simulador y servicio de rutas para el reto SpookyThon 2026 en Manta, Ecuador. El
 ## Estado de los sprints
 
 - Sprint 1 completado: proyecto preparado, mapa validado y base desplegada en AWS.
-- Sprint 2 en desarrollo: motor de turnos, tipos de zombi, eventos de ciudad y estado compartido en DynamoDB.
+- Sprint 2 completado: motor de turnos, tipos de zombi, eventos de ciudad y estado compartido en DynamoDB.
+- Sprint 3 completado: `POST /paso` autenticado calcula y conserva rutas seguras; el equipo verificó manualmente una latencia p95 de 252 ms.
+- Sprint 4 completado: mapa en vivo, rutas y bloqueos visibles, controles de turno y estado final de sobrevivientes en `web/`.
 
 ## Mapa
 
@@ -42,9 +44,21 @@ La API pública tiene estas rutas:
 - `POST /estado/avanzar` — avanza exactamente un turno y requiere una API key en el encabezado `x-api-key`. El cliente debe llamarlo cada 2 segundos para mantener el ritmo del reto. El cuerpo puede omitirse; se generan eventos de ciudad automáticamente cada diez turnos. Para forzar o evitar un evento, envía `{"cityEvent":{"type":"BRIDGE_COLLAPSE"}}`, `{"cityEvent":{"type":"AVENUE_BLOCK"}}` o `{"cityEvent":{"type":"NONE"}}`.
 - `POST /paso` — calcula el siguiente nodo y requiere la misma API key. Recibe `{"sobrevivienteId":"S-0089","nodoActual":"osm:4131814265","turno":142}` y responde `{"siguienteNodo":"..."}`. Usa Dijkstra con distancia/velocidad, evita las calles bloqueadas y los nodos con zombis visibles, y conserva rutas seguras por sobreviviente en DynamoDB.
 
-Los caminantes avanzan una calle cada dos turnos; los corredores avanzan hasta dos calles y persiguen sobrevivientes a tres nodos o menos; las hordas no se mueven y bloquean su nodo y vecinos; los dormidos no aparecen en la respuesta hasta despertar a dos nodos o menos. Después de mover zombis, los sobrevivientes siguen su ruta inicial si el siguiente paso sigue disponible. Los choques al compartir nodo y los cruces opuestos por una misma calle los eliminan como `BITTEN`; llegar a un refugio los marca `RESCUED`.
+Los caminantes avanzan una calle cada dos turnos; los corredores avanzan hasta dos calles y persiguen sobrevivientes a tres nodos o menos; las hordas no se mueven y el planificador evita su nodo; los dormidos no aparecen en la respuesta hasta despertar a dos nodos o menos. Después de mover zombis, el motor usa el mismo planificador que `POST /paso` para cada sobreviviente: conserva una ruta válida y calcula otra si un bloqueo o un zombi vuelve inseguro el trayecto. Los choques al compartir nodo y los cruces opuestos por una misma calle los eliminan como `BITTEN`; llegar a un refugio los marca `RESCUED`.
 
-La partida se guarda en DynamoDB para que las invocaciones de Lambda compartan un mismo estado. El endpoint `/paso` respeta los nodos de las hordas, pero no bloquea automáticamente sus vecinos. La interfaz repetirá el avance cada dos segundos en el Sprint 4.
+La partida se guarda en DynamoDB para que las invocaciones de Lambda compartan un mismo estado. El endpoint `/paso` respeta los nodos de las hordas, pero no bloquea automáticamente sus vecinos.
+
+## Panel web del Sprint 4
+
+El panel estático de `web/` consulta `/map` y `/estado` cada dos segundos y dibuja la red vial, los refugios, las rutas disponibles, los sobrevivientes, los zombis y las calles bloqueadas. Para avanzar la simulación, el usuario ingresa la API key en el panel y elige iniciar, avanzar un turno o pausar. La clave solo vive en la memoria de esa pestaña: no se guarda en almacenamiento del navegador ni se incluye en el código.
+
+Para verlo en la computadora, desde la carpeta del proyecto ejecuta:
+
+```powershell
+npm run web:serve
+```
+
+Después abre `http://127.0.0.1:4173`. No requiere instalar dependencias nuevas ni desplegar otra vez la infraestructura; necesita conexión al API desplegado. El servidor local solo escucha en `127.0.0.1`.
 
 La API key no se guarda en el repositorio ni en texto plano en AWS: CDK recibe su SHA-256 mediante `SIMULATOR_API_KEY_SHA256`. En PowerShell, genera y configura una clave localmente. Conserva `SIMULATOR_API_KEY` de forma privada para las llamadas autenticadas y no la subas al repositorio:
 

@@ -1,6 +1,7 @@
 const DEFAULT_WORLD_ID = 'manta-demo'
 const DEFAULT_SURVIVOR_COUNT = 20
 const CITY_EVENT_INTERVAL_TURNS = 10
+const { planNextStep } = require('../routing/planner')
 
 function buildAdjacency(map, blockedStreetIds = []) {
   const blocked = new Set(blockedStreetIds)
@@ -11,6 +12,31 @@ function buildAdjacency(map, blockedStreetIds = []) {
     adjacency.get(street.toNode)?.push({ nodeId: street.fromNode, streetId: street.id })
   }
   return adjacency
+}
+
+function cachedRouteForSurvivor(survivor, map) {
+  const routeNodeIds = survivor.routeNodeIds || []
+  if (routeNodeIds.length < 2) return null
+
+  const streetByPair = new Map()
+  for (const street of map.streets) {
+    const key = [street.fromNode, street.toNode].sort().join('|')
+    if (!streetByPair.has(key)) streetByPair.set(key, street.id)
+  }
+
+  const routeStreetIds = []
+  for (let index = 0; index < routeNodeIds.length - 1; index += 1) {
+    const streetId = streetByPair.get([routeNodeIds[index], routeNodeIds[index + 1]].sort().join('|'))
+    if (!streetId) return null
+    routeStreetIds.push(streetId)
+  }
+
+  return {
+    routeNodeIds,
+    routeStreetIds,
+    refugeId: survivor.refugeId,
+    mapVersion: map.metadata.sourceTimestamp,
+  }
 }
 
 function shortestPath(startNodeId, targetNodeIds, adjacency, forbiddenNodeIds = new Set()) {
@@ -48,16 +74,6 @@ function stableHash(value) {
   return hash >>> 0
 }
 
-function hordeBlockedNodes(zombies, adjacency) {
-  const blocked = new Set()
-  for (const zombie of zombies) {
-    if (zombie.type !== 'HORDE') continue
-    blocked.add(zombie.nodeId)
-    for (const edge of adjacency.get(zombie.nodeId) || []) blocked.add(edge.nodeId)
-  }
-  return blocked
-}
-
 function makeInitialZombies(map) {
   const types = ['WALKER', 'WALKER', 'RUNNER', 'RUNNER', 'HORDE', 'SLEEPER']
   const preferredIndices = [18, 72, 121, 178, 231, 278]
@@ -85,7 +101,6 @@ function createInitialState(map, worldId = DEFAULT_WORLD_ID) {
   const zombies = makeInitialZombies(map)
   const adjacency = buildAdjacency(map)
   const dangerNodes = new Set(zombies.filter((zombie) => zombie.type !== 'SLEEPER').map((zombie) => zombie.nodeId))
-  for (const nodeId of hordeBlockedNodes(zombies, adjacency)) dangerNodes.add(nodeId)
   const refugeByNodeId = new Map(map.refuges.map((refuge) => [refuge.nodeId, refuge]))
   const refugeNodes = map.refuges.map((refuge) => refuge.nodeId)
   const survivors = []
@@ -242,19 +257,30 @@ function advanceWorld(currentState, map, requestedEvent) {
   const zombieMovements = []
   state.zombies = state.zombies.map((zombie) => moveZombie(zombie, activeSurvivors, adjacency, nextTurn, zombieMovements))
 
-  const blockedByHordes = hordeBlockedNodes(state.zombies, adjacency)
   const survivorMovements = []
   for (const survivor of activeSurvivors) {
     if (survivor.status !== 'ACTIVE') continue
-    const path = survivor.routeNodeIds || []
-    if (path[0] !== survivor.nodeId) continue
-    const nextNodeId = path[1]
-    if (!nextNodeId || blockedByHordes.has(nextNodeId)) continue
+    const decision = planNextStep({
+      sobrevivienteId: survivor.id,
+      nodoActual: survivor.nodeId,
+      turno: nextTurn,
+    }, map, state, cachedRouteForSurvivor(survivor, map))
+    const nextNodeId = decision.siguienteNodo
+    if (decision.routeCache) {
+      const currentIndex = decision.routeCache.routeNodeIds.indexOf(survivor.nodeId)
+      survivor.refugeId = decision.routeCache.refugeId
+      survivor.routeNodeIds = currentIndex >= 0
+        ? decision.routeCache.routeNodeIds.slice(currentIndex)
+        : [survivor.nodeId]
+    } else {
+      survivor.routeNodeIds = [survivor.nodeId]
+    }
+    if (!nextNodeId) continue
     const edge = (adjacency.get(survivor.nodeId) || []).find((candidate) => candidate.nodeId === nextNodeId)
     if (!edge || state.zombies.some((zombie) => !zombie.asleep && zombie.nodeId === nextNodeId)) continue
     const fromNodeId = survivor.nodeId
     survivor.nodeId = nextNodeId
-    survivor.routeNodeIds = path.slice(1)
+    survivor.routeNodeIds = survivor.routeNodeIds.slice(1)
     survivorMovements.push({ survivorId: survivor.id, fromNodeId, toNodeId: nextNodeId, streetId: edge.streetId })
   }
 

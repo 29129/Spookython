@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#080d19" />
+    <meta name="description" content="Simulación de rutas de supervivencia en Manta, Ecuador." />
+    <title>Spookython | Manta en vivo</title>
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="Spookython, inicio">
+          <span class="brand-mark" aria-hidden="true">S</span>
+          <span><strong>SPOOKYTHON</strong><small>SIMULADOR DE MANTA</small></span>
+        </a>
+        <div class="connection" id="connection" data-state="loading">
+          <span class="connection-dot"></span>
+          <span id="connectionText">Conectando con la simulación</span>
+        </div>
+      </header>
+
+      <section class="intro">
+        <div>
+          <p class="eyebrow">ZONA DE EVACUACIÓN · ECUADOR</p>
+          <h1>Manta <span>en tiempo real</span></h1>
+          <p class="intro-copy">Sigue el movimiento de sobrevivientes y zombis hacia los refugios.</p>
+        </div>
+        <div class="turn-chip"><span>TURNO</span><strong id="turnNumber">--</strong></div>
+      </section>
+
+      <section class="metrics" aria-label="Resumen de la simulación">
+        <article class="metric"><span class="metric-label">Sobrevivientes activos</span><strong class="metric-value" id="activeCount">--</strong><span class="metric-note">En movimiento</span></article>
+        <article class="metric"><span class="metric-label">Rescatados</span><strong class="metric-value safe" id="rescuedCount">--</strong><span class="metric-note">Llegaron a refugio</span></article>
+        <article class="metric"><span class="metric-label">Mordidos</span><strong class="metric-value danger" id="bittenCount">--</strong><span class="metric-note">Fuera de la evacuación</span></article>
+        <article class="metric"><span class="metric-label">Zombis visibles</span><strong class="metric-value warning" id="zombieCount">--</strong><span class="metric-note">Los dormidos no aparecen</span></article>
+        <article class="metric"><span class="metric-label">Calles bloqueadas</span><strong class="metric-value" id="blockedCount">--</strong><span class="metric-note" id="lastEvent">Sin incidentes nuevos</span></article>
+      </section>
+
+      <section class="workspace">
+        <article class="map-card">
+          <div class="card-heading">
+            <div><p class="eyebrow">MAPA OPERATIVO</p><h2>Red vial de Manta</h2></div>
+            <div class="map-meta"><span class="live-pulse"></span><span id="mapUpdated">Esperando datos</span></div>
+          </div>
+          <div class="map-frame" id="mapFrame">
+            <svg id="mapSvg" viewBox="0 0 1000 700" role="img" aria-label="Mapa de calles, refugios, sobrevivientes y zombis de Manta">
+              <defs>
+                <pattern id="grid" width="36" height="36" patternUnits="userSpaceOnUse">
+                  <path d="M 36 0 L 0 0 0 36" fill="none" stroke="#182235" stroke-width="1" />
+                </pattern>
+                <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
+                  <feGaussianBlur stdDeviation="3.5" result="blur" />
+                  <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                </filter>
+              </defs>
+              <rect width="1000" height="700" fill="url(#grid)" />
+              <g id="streetLayer"></g>
+              <g id="routeLayer"></g>
+              <g id="refugeLayer"></g>
+              <g id="entityLayer"></g>
+            </svg>
+            <div class="map-overlay" id="mapMessage">Cargando el mapa de Manta…</div>
+            <div class="north-mark" aria-hidden="true"><span>N</span><i></i></div>
+          </div>
+          <div class="legend" aria-label="Leyenda del mapa">
+            <span><i class="legend-line avenue"></i>Avenida</span>
+            <span><i class="legend-line street"></i>Calle</span>
+            <span><i class="legend-line blocked"></i>Bloqueada</span>
+            <span><i class="legend-dot survivor"></i>Sobreviviente</span>
+            <span><i class="legend-dot walker"></i>Caminante</span>
+            <span><i class="legend-dot runner"></i>Corredor</span>
+            <span><i class="legend-dot horde"></i>Horda</span>
+            <span><i class="legend-square"></i>Refugio</span>
+          </div>
+          <p class="attribution">Calles de OpenStreetMap · Los refugios son ubicaciones de demostración, no refugios oficiales.</p>
+        </article>
+
+        <aside class="side-column">
+          <article class="control-card">
+            <p class="eyebrow">CONTROL DE SIMULACIÓN</p>
+            <h2 id="simulationTitle">Modo espectador</h2>
+            <p class="control-copy" id="simulationHelp">El mapa se actualiza automáticamente. Ingresa la clave de control para iniciar o avanzar turnos.</p>
+            <label class="field-label" for="apiKey">Clave de control</label>
+            <input id="apiKey" type="password" autocomplete="off" spellcheck="false" placeholder="x-api-key" />
+            <div class="control-buttons">
+              <button class="button primary" id="startButton" type="button">Iniciar simulación</button>
+              <button class="button secondary" id="stepButton" type="button">Avanzar un turno</button>
+              <button class="button stop" id="stopButton" type="button" disabled>Pausar</button>
+            </div>
+            <div class="simulation-state" id="simulationState"><span class="state-indicator"></span><span>Lectura en vivo activa</span></div>
+            <div class="error-box" id="errorBox" role="alert" hidden></div>
+          </article>
+
+          <article class="event-card">
+            <div class="event-heading"><div><p class="eyebrow">ÚLTIMO EVENTO</p><h2 id="eventTitle">Sin novedades</h2></div><span class="event-icon" aria-hidden="true">!</span></div>
+            <p id="eventDescription">Las rutas permanecen abiertas. Los incidentes aparecerán aquí cuando ocurran.</p>
+          </article>
+
+          <article class="rules-card">
+            <p class="eyebrow">ESTADO DEL MUNDO</p>
+            <div class="rule-row"><span>Duración del turno</span><strong>2 segundos</strong></div>
+            <div class="rule-row"><span>Intersecciones</span><strong id="nodeCount">300</strong></div>
+            <div class="rule-row"><span>Refugios</span><strong id="refugeCount">4</strong></div>
+          </article>
+        </aside>
+      </section>
+
+      <footer class="footer"><span>Spookython · Motor de evacuación de Manta</span><span id="sourceStamp">OpenStreetMap contributors</span></footer>
+    </main>
+  </body>
+</html>

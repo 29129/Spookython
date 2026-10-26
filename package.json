@@ -5,6 +5,7 @@
   "description": "Simulador de supervivencia y rutas en Manta para SpookyThon 2026",
   "scripts": {
     "build": "tsc --noEmit",
+    "web:serve": "node scripts/serve-web.mjs",
     "map:build": "node scripts/build-map.mjs",
     "map:validate": "node scripts/validate-map.mjs",
     "synth": "cdk synth --strict",
