@@ -4,6 +4,7 @@ import * as apigwv2 from 'aws-cdk-lib/aws-apigatewayv2'
 import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations'
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb'
 import * as lambda from 'aws-cdk-lib/aws-lambda'
+import * as nodejs from 'aws-cdk-lib/aws-lambda-nodejs'
 import * as logs from 'aws-cdk-lib/aws-logs'
 import { Construct } from 'constructs'
 
@@ -24,34 +25,38 @@ export class SpookythonStack extends cdk.Stack {
       retention: logs.RetentionDays.ONE_WEEK,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     })
-    const apiHandler = new lambda.Function(this, 'ApiHandler', {
+    const apiHandler = new nodejs.NodejsFunction(this, 'ApiHandler', {
       runtime: lambda.Runtime.NODEJS_22_X,
       architecture: lambda.Architecture.ARM_64,
       functionName: 'spookython-api-handler',
       logGroup: apiLogGroup,
-      handler: 'handler.handler',
-      code: lambda.Code.fromAsset(path.join(__dirname, '../../src')),
+      entry: path.join(__dirname, '../../src/handler.js'),
+      bundling: { bundleAwsSDK: true, minify: true, sourceMap: false },
       memorySize: 512,
-      timeout: cdk.Duration.seconds(3),
+      timeout: cdk.Duration.seconds(8),
       environment: {
         MAP_VERSION: '1',
         WORLD_STATE_TABLE_NAME: worldStateTable.tableName,
+        SIMULATOR_API_KEY_SHA256: process.env.SIMULATOR_API_KEY_SHA256 || '',
       },
     })
+    worldStateTable.grant(apiHandler, 'dynamodb:GetItem', 'dynamodb:PutItem')
 
     const api = new apigwv2.HttpApi(this, 'SpookythonHttpApi', {
       apiName: 'spookython-api',
       description: 'API pública del simulador Spookython',
       corsPreflight: {
         allowOrigins: ['*'],
-        allowMethods: [apigwv2.CorsHttpMethod.GET],
-        allowHeaders: ['content-type'],
+        allowMethods: [apigwv2.CorsHttpMethod.GET, apigwv2.CorsHttpMethod.POST],
+        allowHeaders: ['content-type', 'x-api-key'],
         maxAge: cdk.Duration.hours(1),
       },
     })
     const integration = new HttpLambdaIntegration('ApiIntegration', apiHandler)
     api.addRoutes({ path: '/health', methods: [apigwv2.HttpMethod.GET], integration })
     api.addRoutes({ path: '/map', methods: [apigwv2.HttpMethod.GET], integration })
+    api.addRoutes({ path: '/estado', methods: [apigwv2.HttpMethod.GET], integration })
+    api.addRoutes({ path: '/estado/avanzar', methods: [apigwv2.HttpMethod.POST], integration })
 
     new cdk.CfnOutput(this, 'ApiBaseUrl', { value: api.apiEndpoint })
     new cdk.CfnOutput(this, 'WorldStateTableName', { value: worldStateTable.tableName })

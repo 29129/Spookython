@@ -2,12 +2,10 @@
 
 Simulador y servicio de rutas para el reto SpookyThon 2026 en Manta, Ecuador. El alcance sigue el plan de seis sprints en [`docs/Plan_de_desarrollo.txt`](docs/Plan_de_desarrollo.txt). Nos enfocamos en los requisitos obligatorios del nivel base; las funciones Pro quedan fuera.
 
-## Estado del Sprint 1
+## Estado de los sprints
 
-- Proyecto TypeScript y AWS CDK preparado.
-- Grafo local con 300 intersecciones conectadas, 424 segmentos de calle y cuatro refugios de demostración.
-- Validador que comprueba conexiones, conteos, coordenadas, distancias, velocidades y referencias a refugios.
-- Infraestructura base lista para desplegar: HTTP API, Lambda de lectura del mapa, tabla DynamoDB para el estado compartido y alertas de presupuesto.
+- Sprint 1 completado: proyecto preparado, mapa validado y base desplegada en AWS.
+- Sprint 2 en desarrollo: motor de turnos, tipos de zombi, eventos de ciudad y estado compartido en DynamoDB.
 
 ## Mapa
 
@@ -34,14 +32,31 @@ npm run build
 
 `map:build` genera el grafo desde la extracción guardada en `data/manta.osm.json`. No requiere una descarga de red para repetir la generación.
 
-## API base del Sprint 1
+## API actual
 
-La Lambda implementa rutas de solo lectura para comprobar el despliegue:
+La API pública tiene estas rutas:
 
 - `GET /health` — estado del servicio.
 - `GET /map` — grafo completo con sus metadatos.
+- `GET /estado` — estado actual del mundo. Si todavía no existe, crea la partida de demostración con 20 sobrevivientes y los cuatro tipos de zombi.
+- `POST /estado/avanzar` — avanza exactamente un turno y requiere una API key en el encabezado `x-api-key`. El cliente debe llamarlo cada 2 segundos para mantener el ritmo del reto. El cuerpo puede omitirse; se generan eventos de ciudad automáticamente cada diez turnos. Para forzar o evitar un evento, envía `{"cityEvent":{"type":"BRIDGE_COLLAPSE"}}`, `{"cityEvent":{"type":"AVENUE_BLOCK"}}` o `{"cityEvent":{"type":"NONE"}}`.
 
-El endpoint `POST /paso`, la autenticación con API key y la simulación se desarrollarán en sus sprints correspondientes.
+Los caminantes avanzan una calle cada dos turnos; los corredores avanzan hasta dos calles y persiguen sobrevivientes a tres nodos o menos; las hordas no se mueven y bloquean su nodo y vecinos; los dormidos no aparecen en la respuesta hasta despertar a dos nodos o menos. Después de mover zombis, los sobrevivientes siguen su ruta inicial si el siguiente paso sigue disponible. Los choques al compartir nodo y los cruces opuestos por una misma calle los eliminan como `BITTEN`; llegar a un refugio los marca `RESCUED`.
+
+La partida se guarda en DynamoDB para que las invocaciones de Lambda compartan un mismo estado. Las decisiones de ruta de esta etapa son una base simple; Dijkstra/A* y el endpoint `POST /paso` protegido con `x-api-key` corresponden al Sprint 3. La interfaz repetirá el avance cada dos segundos en el Sprint 4.
+
+La API key no se guarda en el repositorio ni en texto plano en AWS: CDK recibe su SHA-256 mediante `SIMULATOR_API_KEY_SHA256`. En PowerShell, genera y configura una clave localmente. Conserva `SIMULATOR_API_KEY` de forma privada para las llamadas autenticadas y no la subas al repositorio:
+
+```powershell
+$bytes = New-Object byte[] 32
+$rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+$rng.GetBytes($bytes)
+$env:SIMULATOR_API_KEY = [BitConverter]::ToString($bytes).Replace('-', '').ToLowerInvariant()
+$sha = [System.Security.Cryptography.SHA256]::Create()
+$env:SIMULATOR_API_KEY_SHA256 = [BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($env:SIMULATOR_API_KEY))).Replace('-', '').ToLowerInvariant()
+```
+
+Antes de ejecutar `cdk synth`, `cdk diff` o `cdk deploy`, configura también `BUDGET_ALERT_EMAIL` y `MONTHLY_BUDGET_USD` para conservar el Budget de la cuenta.
 
 ## AWS
 

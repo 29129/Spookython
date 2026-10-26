@@ -38,6 +38,14 @@ export interface Zombie {
   asleep?: boolean
 }
 
+export type CityEventType = 'BRIDGE_COLLAPSE' | 'AVENUE_BLOCK'
+
+export interface CityEvent {
+  type: CityEventType
+  streetId: string
+  turn: number
+}
+
 export interface Survivor {
   id: string
   nodeId: string
@@ -53,6 +61,7 @@ export interface GameState {
   zombies: Zombie[]
   survivors: Survivor[]
   blockedStreetIds: string[]
+  lastEvent?: CityEvent | null
 }
 
 export interface MantaMap {

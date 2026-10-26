@@ -1,4 +1,7 @@
 const mantaMap = require('./data/manta.graph.json')
+const { getOrCreateWorldState, advanceStoredWorldState } = require('./simulation/store')
+const { createInitialState, publicState } = require('./simulation/engine')
+const { checkApiKey } = require('./security/api-key')
 
 function response(statusCode, body) {
   return {
@@ -17,6 +20,42 @@ exports.handler = async (event) => {
   }
   if (method === 'GET' && route === '/map') {
     return response(200, mantaMap)
+  }
+  if (method === 'GET' && route === '/estado') {
+    const state = await getOrCreateWorldState(() => createInitialState(mantaMap))
+    return response(200, publicState(state, mantaMap))
+  }
+  if (method === 'POST' && route === '/estado/avanzar') {
+    const authorization = checkApiKey(event)
+    if (authorization === 'not-configured') {
+      return response(503, { message: 'La API key del simulador todavía no está configurada.' })
+    }
+    if (authorization !== 'valid') return response(401, { message: 'API key inválida.' })
+
+    let payload = {}
+    try {
+      const body = event.body
+        ? (event.isBase64Encoded ? Buffer.from(event.body, 'base64').toString('utf8') : event.body)
+        : '{}'
+      payload = JSON.parse(body)
+    } catch {
+      return response(400, { message: 'El cuerpo debe ser JSON válido.' })
+    }
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+      return response(400, { message: 'El cuerpo debe ser un objeto JSON.' })
+    }
+
+    try {
+      const state = await advanceStoredWorldState(mantaMap, payload.cityEvent)
+      return response(200, publicState(state, mantaMap))
+    } catch (error) {
+      if (error.name === 'InvalidCityEventError') return response(400, { message: error.message })
+      if (error.name === 'ConditionalCheckFailedException') {
+        return response(409, { message: 'Otro cliente avanzó el turno. Vuelve a consultar /estado.' })
+      }
+      console.error('No se pudo avanzar la simulación:', error.name || error.message)
+      return response(500, { message: 'No se pudo avanzar la simulación.' })
+    }
   }
   return response(404, { message: 'Ruta no encontrada.' })
 }
