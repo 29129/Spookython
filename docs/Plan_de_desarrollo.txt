@@ -1,0 +1,49 @@
+Día 1
+Sprint 1 — Preparar el proyecto y el mapa
+Objetivo: tener una base desplegable y el mapa de Manta representado como datos.
+- Crear o preparar el repositorio público, con commits frecuentes.
+- Configurar el entorno de AWS y crear un Budget con alerta; guardar una captura para la entrega.
+- Preparar el grafo con unas 300 intersecciones, coordenadas, calles, distancias y tipo de vía; incluir los 4 refugios.
+- Definir una estructura única para nodos, calles, zombis, sobrevivientes y bloqueos.
+Listo cuando: el proyecto se construye y despliega, y el mapa se carga desde un archivo de datos validable.
+Sprint 2 — Simulador y reglas del mundo
+Objetivo: implementar las reglas que hacen avanzar la partida.
+- Ejecutar turnos de 2 segundos: primero se mueven los zombis y después los sobrevivientes.
+- Implementar caminantes, corredores, hordas y dormidos con las reglas indicadas.
+- Implementar calles bloqueadas, colapso de puente, mordidas y eliminación de sobrevivientes.
+- Publicar el estado actual mediante GET /estado o WebSocket.
+Listo cuando: una ronda de simulación avanza y el estado muestra turno, zombis y calles bloqueadas correctamente.
+Sprint 3 — API de movimiento y rutas
+Objetivo: responder la consulta del simulador para cada sobreviviente.
+- Crear POST /paso con el contrato indicado en el reto.
+- Protegerlo con x-api-key.
+- Calcular rutas a los refugios con Dijkstra o A*, considerando distancia y tipo de calle.
+- Devolver el siguiente nodo solo si es el mismo nodo o un vecino conectado por una calle no bloqueada.
+- Evitar zombis visibles y el nodo de la horda; no bloquear automáticamente todos sus vecinos.
+- Guardar o reutilizar las rutas para no recalcular todo en cada turno.
+Listo cuando: el simulador recibe una respuesta válida por sobreviviente y el endpoint responde en menos de 500 ms en las pruebas locales.
+Día 2
+Sprint 4 — Mapa web en vivo
+Objetivo: que una persona pueda entender y usar la simulación sin explicaciones.
+- Mostrar Manta, calles, refugios, zombis por tipo y sobrevivientes.
+- Dibujar rutas planificadas y marcar calles bloqueadas.
+- Actualizar la vista en cada turno.
+- Mostrar el estado de la ronda y cuántos sobrevivientes siguen activos.
+Listo cuando: durante una ronda se ven en el mapa los cambios de posición y los bloqueos.
+Sprint 5 — Prueba de fuego y rendimiento
+Objetivo: validar las tres rondas del reto y corregir fallos que afecten la puntuación.
+- Ejecutar las rondas con 20, 80 y 200 sobrevivientes.
+- Revisar supervivencia, rutas frente a la ruta más corta sin zombis, latencia p95 y errores o respuestas fuera de tiempo.
+- Probar colapso de puente, calles bloqueadas, zombis dormidos y cruces entre zombis y sobrevivientes.
+- Corregir primero rutas inválidas, errores y demoras; medir cambios después de cada ajuste.
+Listo cuando: las tres rondas se pueden ejecutar completas y se guardan métricas de latencia, supervivencia y errores.
+Sprint 6 — Despliegue y entrega
+Objetivo: dejar todo accesible y explicable antes del cierre.
+- Desplegar la API y el mapa en AWS con una URL pública.
+- Probar POST /paso desde fuera del entorno de desarrollo.
+- Completar el README con cómo desplegar, ejecutar el simulador, consultar el endpoint, medir latencia, decisiones de diseño y limitaciones conocidas.
+- Añadir diagrama de arquitectura, declaración de costos y captura del Budget.
+- Hacer una prueba de presentación de 5 minutos y preparar respuestas para los 3 minutos de preguntas.
+Listo cuando: el repositorio público contiene código e historial de commits, la aplicación funciona en su URL pública y los entregables están cargados antes de la hora límite.
+Qué dejamos fuera
+No vamos a implementar predicción avanzada de corredores, capacidad inteligente de refugios, camionetas de rescate, animaciones elaboradas ni funciones que no aparecen en los criterios obligatorios. Si sobra tiempo después del Sprint 6, reevaluamos; antes de eso, cada hora se dedica a los requisitos base y a la prueba de fuego.

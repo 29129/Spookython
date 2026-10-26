@@ -1,0 +1,23 @@
+{
+  "name": "spookython",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Simulador de supervivencia y rutas en Manta para SpookyThon 2026",
+  "scripts": {
+    "build": "tsc --noEmit",
+    "map:build": "node scripts/build-map.mjs",
+    "map:validate": "node scripts/validate-map.mjs",
+    "synth": "cdk synth --strict",
+    "diff": "cdk diff"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "aws-cdk": "2.1146.1",
+    "tsx": "^4.23.0",
+    "typescript": "npm:@typescript/typescript6@^6.0.2"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.270.0",
+    "constructs": "^10.5.0"
+  }
+}
