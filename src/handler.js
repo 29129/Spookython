@@ -2,6 +2,7 @@ const mantaMap = require('./data/manta.graph.json')
 const { getOrCreateWorldState, advanceStoredWorldState } = require('./simulation/store')
 const { createInitialState, publicState } = require('./simulation/engine')
 const { checkApiKey } = require('./security/api-key')
+const { getNextStep } = require('./routing/service')
 
 function response(statusCode, body) {
   return {
@@ -55,6 +56,32 @@ exports.handler = async (event) => {
       }
       console.error('No se pudo avanzar la simulación:', error.name || error.message)
       return response(500, { message: 'No se pudo avanzar la simulación.' })
+    }
+  }
+  if (method === 'POST' && route === '/paso') {
+    const authorization = checkApiKey(event)
+    if (authorization === 'not-configured') {
+      return response(503, { message: 'La API key del simulador todavía no está configurada.' })
+    }
+    if (authorization !== 'valid') return response(401, { message: 'API key inválida.' })
+
+    let payload
+    try {
+      const body = event.body
+        ? (event.isBase64Encoded ? Buffer.from(event.body, 'base64').toString('utf8') : event.body)
+        : '{}'
+      payload = JSON.parse(body)
+    } catch {
+      return response(400, { message: 'El cuerpo debe ser JSON válido.' })
+    }
+
+    try {
+      const siguienteNodo = await getNextStep(payload, mantaMap)
+      return response(200, { siguienteNodo })
+    } catch (error) {
+      if (error.name === 'InvalidStepRequestError') return response(400, { message: error.message })
+      console.error('No se pudo calcular el siguiente paso:', error.name || error.message)
+      return response(500, { message: 'No se pudo calcular el siguiente paso.' })
     }
   }
   return response(404, { message: 'Ruta no encontrada.' })

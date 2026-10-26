@@ -40,10 +40,11 @@ La API pública tiene estas rutas:
 - `GET /map` — grafo completo con sus metadatos.
 - `GET /estado` — estado actual del mundo. Si todavía no existe, crea la partida de demostración con 20 sobrevivientes y los cuatro tipos de zombi.
 - `POST /estado/avanzar` — avanza exactamente un turno y requiere una API key en el encabezado `x-api-key`. El cliente debe llamarlo cada 2 segundos para mantener el ritmo del reto. El cuerpo puede omitirse; se generan eventos de ciudad automáticamente cada diez turnos. Para forzar o evitar un evento, envía `{"cityEvent":{"type":"BRIDGE_COLLAPSE"}}`, `{"cityEvent":{"type":"AVENUE_BLOCK"}}` o `{"cityEvent":{"type":"NONE"}}`.
+- `POST /paso` — calcula el siguiente nodo y requiere la misma API key. Recibe `{"sobrevivienteId":"S-0089","nodoActual":"osm:4131814265","turno":142}` y responde `{"siguienteNodo":"..."}`. Usa Dijkstra con distancia/velocidad, evita las calles bloqueadas y los nodos con zombis visibles, y conserva rutas seguras por sobreviviente en DynamoDB.
 
 Los caminantes avanzan una calle cada dos turnos; los corredores avanzan hasta dos calles y persiguen sobrevivientes a tres nodos o menos; las hordas no se mueven y bloquean su nodo y vecinos; los dormidos no aparecen en la respuesta hasta despertar a dos nodos o menos. Después de mover zombis, los sobrevivientes siguen su ruta inicial si el siguiente paso sigue disponible. Los choques al compartir nodo y los cruces opuestos por una misma calle los eliminan como `BITTEN`; llegar a un refugio los marca `RESCUED`.
 
-La partida se guarda en DynamoDB para que las invocaciones de Lambda compartan un mismo estado. Las decisiones de ruta de esta etapa son una base simple; Dijkstra/A* y el endpoint `POST /paso` protegido con `x-api-key` corresponden al Sprint 3. La interfaz repetirá el avance cada dos segundos en el Sprint 4.
+La partida se guarda en DynamoDB para que las invocaciones de Lambda compartan un mismo estado. El endpoint `/paso` respeta los nodos de las hordas, pero no bloquea automáticamente sus vecinos. La interfaz repetirá el avance cada dos segundos en el Sprint 4.
 
 La API key no se guarda en el repositorio ni en texto plano en AWS: CDK recibe su SHA-256 mediante `SIMULATOR_API_KEY_SHA256`. En PowerShell, genera y configura una clave localmente. Conserva `SIMULATOR_API_KEY` de forma privada para las llamadas autenticadas y no la subas al repositorio:
 

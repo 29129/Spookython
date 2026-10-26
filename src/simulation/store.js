@@ -25,6 +25,29 @@ async function readWorldState() {
   return state
 }
 
+async function readRouteCache(survivorId) {
+  const result = await dynamoDb.send(new GetCommand({
+    TableName: tableName(),
+    Key: { worldId: 'manta-demo', entityId: `ROUTE#${survivorId}` },
+    ConsistentRead: true,
+  }))
+  if (!result.Item) return null
+  const { worldId, entityId, survivorId: cachedSurvivorId, ...route } = result.Item
+  return route
+}
+
+async function writeRouteCache(survivorId, route) {
+  await dynamoDb.send(new PutCommand({
+    TableName: tableName(),
+    Item: {
+      worldId: 'manta-demo',
+      entityId: `ROUTE#${survivorId}`,
+      survivorId,
+      ...route,
+    },
+  }))
+}
+
 async function saveInitialState(state) {
   await dynamoDb.send(new PutCommand({
     TableName: tableName(),
@@ -70,4 +93,9 @@ async function advanceStoredWorldStateFromState(current, map, requestedEvent) {
   return next
 }
 
-module.exports = { advanceStoredWorldState, getOrCreateWorldState }
+module.exports = {
+  advanceStoredWorldState,
+  getOrCreateWorldState,
+  readRouteCache,
+  writeRouteCache,
+}

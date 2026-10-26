@@ -57,6 +57,7 @@ export class SpookythonStack extends cdk.Stack {
     api.addRoutes({ path: '/map', methods: [apigwv2.HttpMethod.GET], integration })
     api.addRoutes({ path: '/estado', methods: [apigwv2.HttpMethod.GET], integration })
     api.addRoutes({ path: '/estado/avanzar', methods: [apigwv2.HttpMethod.POST], integration })
+    api.addRoutes({ path: '/paso', methods: [apigwv2.HttpMethod.POST], integration })
 
     new cdk.CfnOutput(this, 'ApiBaseUrl', { value: api.apiEndpoint })
     new cdk.CfnOutput(this, 'WorldStateTableName', { value: worldStateTable.tableName })
