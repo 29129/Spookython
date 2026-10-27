@@ -7,7 +7,7 @@
     <meta name="description" content="Simulación de rutas de supervivencia en Manta, Ecuador." />
     <title>Spookython | Manta en vivo</title>
     <link rel="stylesheet" href="/styles.css" />
-    <script src="/app.js" defer></script>
+    <script src="/app.js" type="module"></script>
   </head>
   <body>
     <main class="shell">
@@ -74,6 +74,8 @@
             <span><i class="legend-dot runner"></i>Corredor</span>
             <span><i class="legend-dot horde"></i>Horda</span>
             <span><i class="legend-square"></i>Refugio</span>
+            <span><i class="legend-truck"></i>Camioneta Pro</span>
+            <span><i class="legend-prediction"></i>Predicción Pro</span>
           </div>
           <p class="attribution">Calles de OpenStreetMap · Los refugios son ubicaciones de demostración, no refugios oficiales.</p>
         </article>
@@ -85,6 +87,13 @@
             <p class="control-copy" id="simulationHelp">El mapa se actualiza automáticamente. Ingresa la clave de control para iniciar o avanzar turnos.</p>
             <label class="field-label" for="apiKey">Clave de control</label>
             <input id="apiKey" type="password" autocomplete="off" spellcheck="false" placeholder="x-api-key" />
+            <label class="field-label" for="roundSelect">Ronda</label>
+            <select id="roundSelect"><option value="1">Anochecer · 20 · caminantes</option><option value="2">Medianoche · 80 · puente colapsado</option><option value="3">Apocalipsis · 200 · todos los tipos</option></select>
+            <label class="pro-toggle"><input id="proMode" type="checkbox" /> Activar nivel Pro</label>
+            <label class="field-label" for="refugeCapacity">Cupos por refugio (Pro, opcional)</label>
+            <input id="refugeCapacity" type="number" min="0" max="1000" placeholder="Automático: 5, 20 o 50" disabled />
+            <button class="button secondary" id="resetButton" type="button">Nueva ronda · reiniciar el mundo</button>
+            <p class="control-copy">Nueva ronda reinicia la simulación compartida. Pro activa predicción, reservas y 5 camionetas.</p>
             <div class="control-buttons">
               <button class="button primary" id="startButton" type="button">Iniciar simulación</button>
               <button class="button secondary" id="stepButton" type="button">Avanzar un turno</button>
@@ -104,6 +113,13 @@
             <div class="rule-row"><span>Duración del turno</span><strong>2 segundos</strong></div>
             <div class="rule-row"><span>Intersecciones</span><strong id="nodeCount">300</strong></div>
             <div class="rule-row"><span>Refugios</span><strong id="refugeCount">4</strong></div>
+            <p class="control-copy" id="httpMetrics">Esperando métricas HTTP.</p>
+          </article>
+          <article class="rules-card" id="proPanel" hidden>
+            <p class="eyebrow">NIVEL PRO · RESCATE</p>
+            <p class="control-copy" id="vehicleStatus"></p>
+            <div class="refuge-status" id="refugeStatus"></div>
+            <p class="control-copy">Los anillos naranjas indican posiciones previstas de corredores. Las zonas violetas incluyen los vecinos de las hordas.</p>
           </article>
         </aside>
       </section>

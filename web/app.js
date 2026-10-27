@@ -1,3 +1,5 @@
+import { advanceHttpTurn } from './simulator-client.mjs'
+
 const API_BASE_URL = 'https://gkzb014d54.execute-api.us-east-1.amazonaws.com'
 const REFRESH_INTERVAL_MS = 2000
 const SVG_NS = 'http://www.w3.org/2000/svg'
@@ -31,6 +33,14 @@ const elements = {
   errorBox: document.querySelector('#errorBox'),
   eventTitle: document.querySelector('#eventTitle'),
   eventDescription: document.querySelector('#eventDescription'),
+  roundSelect: document.querySelector('#roundSelect'),
+  proMode: document.querySelector('#proMode'),
+  refugeCapacity: document.querySelector('#refugeCapacity'),
+  resetButton: document.querySelector('#resetButton'),
+  proPanel: document.querySelector('#proPanel'),
+  refugeStatus: document.querySelector('#refugeStatus'),
+  vehicleStatus: document.querySelector('#vehicleStatus'),
+  httpMetrics: document.querySelector('#httpMetrics'),
 }
 
 let mapData = null
@@ -38,6 +48,9 @@ let worldState = null
 let isRunning = false
 let runSequence = 0
 let refreshInFlight = false
+let turnInFlight = false
+let observedSlowTurns = 0
+let lastHttpTurnMs = 0
 
 function svgElement(name, attributes = {}) {
   const element = document.createElementNS(SVG_NS, name)
@@ -104,6 +117,16 @@ function drawStreets(project, blockedStreetIds) {
       const point = project(coordinate)
       return `${point.x.toFixed(1)},${point.y.toFixed(1)}`
     })
+    if (blocked.has(street.id)) {
+      const center = project(street.geometry[Math.floor(street.geometry.length / 2)])
+      const marker = svgElement('text', { x: center.x, y: center.y, class: 'closed-street-marker' })
+      marker.textContent = '×'
+      const title = svgElement('title')
+      title.textContent = `${street.name || street.type} cerrada: arista retirada de la red transitable`
+      marker.append(title)
+      elements.streetLayer.append(marker)
+      continue
+    }
     const path = svgElement('polyline', {
       class: `street ${typeClass(street.type)}${blocked.has(street.id) ? ' blocked' : ''}`,
       points: coordinates.join(' '),
@@ -124,7 +147,8 @@ function drawRoutes(project, state, blockedStreetIds) {
     if (!streetByPair.has(key) || blocked.has(streetByPair.get(key).id)) streetByPair.set(key, street)
   }
 
-  const active = state.survivors.filter((survivor) => survivor.status === 'ACTIVE' && survivor.routeNodeIds?.length > 1)
+  const active = [...state.survivors.filter((survivor) => survivor.status === 'ACTIVE' && survivor.routeNodeIds?.length > 1),
+    ...(state.vehicles || []).filter((vehicle) => vehicle.routeNodeIds?.length > 1).map((vehicle) => ({ ...vehicle, rescueVehicle: true }))]
   for (const survivor of active) {
     const points = []
     for (let index = 0; index < survivor.routeNodeIds.length - 1; index += 1) {
@@ -140,16 +164,16 @@ function drawRoutes(project, state, blockedStreetIds) {
       points.push(`${index === 0 ? 'M' : 'L'}${start.x.toFixed(1)},${start.y.toFixed(1)} L${end.x.toFixed(1)},${end.y.toFixed(1)}`)
     }
     if (points.length) {
-      const route = svgElement('path', { class: 'route-line', d: points.join(' ') })
+      const route = svgElement('path', { class: survivor.rescueVehicle ? 'route-line vehicle-route' : 'route-line', d: points.join(' ') })
       const title = svgElement('title')
-      title.textContent = `Ruta planificada · ${survivor.id}`
+      title.textContent = `Ruta ${survivor.rescueVehicle ? 'de rescate' : 'planificada'} · ${survivor.id}`
       route.append(title)
       elements.routeLayer.append(route)
     }
   }
 }
 
-function drawRefuges(project) {
+function drawRefuges(project, state) {
   elements.refugeLayer.replaceChildren()
   for (const [index, refuge] of mapData.refuges.entries()) {
     const point = project([refuge.lng, refuge.lat])
@@ -160,7 +184,8 @@ function drawRefuges(project) {
     label.textContent = `R${index + 1}`
     marker.append(label)
     const title = svgElement('title')
-    title.textContent = `${refuge.name} · refugio de demostración`
+    const occupancy = state?.refuges?.find((item) => item.id === refuge.id)
+    title.textContent = `${refuge.name}${state?.pro ? ` · ${occupancy?.occupied || 0}/${occupancy?.capacity} ocupados, ${occupancy?.reserved || 0} reservados` : ' · refugio de demostración'}`
     marker.append(title)
     elements.refugeLayer.append(marker)
   }
@@ -169,6 +194,7 @@ function drawRefuges(project) {
 function drawEntities(project, state) {
   elements.entityLayer.replaceChildren()
   for (const survivor of state.survivors) {
+    if (survivor.status === 'ONBOARD') continue
     const node = mapData.nodesById.get(survivor.nodeId)
     if (!node) continue
     const point = project([node.lng, node.lat])
@@ -180,6 +206,41 @@ function drawEntities(project, state) {
     title.textContent = `${survivor.id} · ${survivor.status}`
     marker.append(title)
     elements.entityLayer.append(marker)
+  }
+
+  for (const vehicle of state.vehicles || []) {
+    const node = mapData.nodesById.get(vehicle.nodeId)
+    if (!node) continue
+    const point = project([node.lng, node.lat])
+    const marker = svgElement('g', { transform: `translate(${point.x} ${point.y})` })
+    marker.append(svgElement('rect', { x: -8, y: -5, width: 16, height: 10, rx: 2, class: 'vehicle-mark' }))
+    const label = svgElement('text', { x: 0, y: 0, class: 'entity-label' })
+    label.textContent = vehicle.passengerIds.length
+    marker.append(label)
+    const title = svgElement('title')
+    title.textContent = `${vehicle.id} · ${vehicle.passengerIds.length}/4 pasajeros · objetivo ${vehicle.targetSurvivorId || 'refugio'}`
+    marker.append(title)
+    elements.entityLayer.append(marker)
+  }
+  for (const nodeId of state.dangerNodeIds || []) {
+    const node = mapData.nodesById.get(nodeId)
+    if (!node || !state.zombies.some((zombie) => zombie.type === 'HORDE' && (zombie.nodeId === nodeId
+      || mapData.streets.some((street) => (street.fromNode === zombie.nodeId && street.toNode === nodeId)
+        || (street.toNode === zombie.nodeId && street.fromNode === nodeId))))) continue
+    const point = project([node.lng, node.lat])
+    elements.entityLayer.append(svgElement('circle', { cx: point.x, cy: point.y, r: 10, class: 'horde-zone' }))
+  }
+  for (const prediction of state.runnerPredictions || []) {
+    for (const nodeId of prediction.nodeIds) {
+      const node = mapData.nodesById.get(nodeId)
+      if (!node) continue
+      const point = project([node.lng, node.lat])
+      const marker = svgElement('circle', { cx: point.x, cy: point.y, r: 9, class: 'runner-prediction' })
+      const title = svgElement('title')
+      title.textContent = `Posición prevista de ${prediction.zombieId} en el siguiente turno`
+      marker.append(title)
+      elements.entityLayer.append(marker)
+    }
   }
 
   const zombieLabels = { WALKER: 'C', RUNNER: 'R', HORDE: 'H', SLEEPER: 'D' }
@@ -217,12 +278,13 @@ function describeEvent(event) {
 
 function render(state) {
   if (!mapData || !state) return
+  if (worldState?.revision !== undefined && state.revision !== undefined && state.revision < worldState.revision) return
   worldState = state
   const project = makeProjection(mapData)
   const blockedStreetIds = state.blockedStreetIds || []
   drawStreets(project, blockedStreetIds)
   drawRoutes(project, state, blockedStreetIds)
-  drawRefuges(project)
+  drawRefuges(project, state)
   drawEntities(project, state)
 
   elements.turnNumber.textContent = String(state.turn).padStart(2, '0')
@@ -237,6 +299,16 @@ function render(state) {
   elements.refugeCount.textContent = mapData.refuges.length
   elements.sourceStamp.textContent = `OpenStreetMap contributors · ${mapData.metadata.sourceTimestamp.slice(0, 10)}`
   describeEvent(state.lastEvent)
+  elements.proPanel.hidden = !state.pro
+  elements.refugeStatus.replaceChildren()
+  for (const refuge of state.refuges || []) {
+    const line = document.createElement('p')
+    line.textContent = `${refuge.id}: ${refuge.occupied || 0}/${refuge.capacity ?? '∞'} ocupados · ${refuge.reserved || 0} reservas`
+    elements.refugeStatus.append(line)
+  }
+  elements.vehicleStatus.textContent = `${state.vehicles?.length || 0} camionetas · ${state.summary.onboardSurvivors || 0} pasajeros a bordo`
+  const metrics = state.metrics
+  elements.httpMetrics.textContent = metrics ? `${metrics.requests} consultas · ${metrics.timeouts} fuera de tiempo · ${metrics.errors} errores · ${metrics.invalidMoves} inválidos. Último turno observado: ${Math.round(lastHttpTurnMs)} ms · ${observedSlowTurns} turnos >2 s en esta pestaña.` : 'Inicia una ronda nueva para medir las consultas HTTP.'
   setConnection('online', 'Conectado · actualización cada 2 s')
 }
 
@@ -263,10 +335,15 @@ async function refreshState() {
 
 function setControlState(running) {
   isRunning = running
-  elements.startButton.disabled = running
-  elements.stepButton.disabled = running
+  const busy = running || turnInFlight
+  elements.startButton.disabled = busy
+  elements.stepButton.disabled = busy
   elements.stopButton.disabled = !running
-  elements.apiKey.disabled = running
+  elements.apiKey.disabled = busy
+  elements.resetButton.disabled = busy
+  elements.roundSelect.disabled = busy
+  elements.proMode.disabled = busy
+  elements.refugeCapacity.disabled = busy || !elements.proMode.checked
   elements.simulationTitle.textContent = running ? 'Simulación en curso' : 'Modo espectador'
   elements.simulationHelp.textContent = running
     ? 'Los zombis avanzan primero; luego se actualiza el estado de los sobrevivientes.'
@@ -276,13 +353,26 @@ function setControlState(running) {
 }
 
 async function advanceOneTurn(apiKey) {
-  const state = await fetchJson('/estado/avanzar', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-api-key': apiKey },
-    body: '{}',
-  })
-  render(state)
-  return state
+  if (turnInFlight) throw new Error('Ya hay un turno en proceso.')
+  turnInFlight = true
+  elements.startButton.disabled = true
+  elements.stepButton.disabled = true
+  elements.resetButton.disabled = true
+  try {
+    const result = await advanceHttpTurn({
+    baseUrl: API_BASE_URL, apiKey, currentState: worldState,
+    onProgress: (completed, total) => {
+      elements.simulationHelp.textContent = `Turno en proceso: ${completed}/${total} respuestas de /paso. Las tardías se quedan quietas.`
+    },
+    })
+    lastHttpTurnMs = result.durationMs
+    if (lastHttpTurnMs > 2000) observedSlowTurns += 1
+    render(result.state)
+    return result.state
+  } finally {
+    turnInFlight = false
+    setControlState(isRunning)
+  }
 }
 
 async function startSimulation() {
@@ -292,15 +382,21 @@ async function startSimulation() {
     return
   }
   clearError()
+  if (worldState?.roundFinished || worldState?.turn >= 150) {
+    showError('La ronda ya terminó. Selecciona una ronda y pulsa Nueva ronda.')
+    return
+  }
   setControlState(true)
   const sequence = ++runSequence
   while (isRunning && sequence === runSequence) {
     const startedAt = Date.now()
     try {
       const state = await advanceOneTurn(apiKey)
-      if (state.summary.activeSurvivors === 0) {
+      if (state.roundFinished || state.summary.activeSurvivors === 0) {
         setControlState(false)
-        elements.simulationHelp.textContent = 'La evacuación terminó: no quedan sobrevivientes activos.'
+        elements.simulationHelp.textContent = state.summary.activeSurvivors === 0
+          ? 'La evacuación terminó: no quedan sobrevivientes activos.'
+          : `Límite de 150 turnos alcanzado: quedan ${state.summary.activeSurvivors} personas sin evacuar.`
         break
       }
     } catch (error) {
@@ -336,13 +432,34 @@ elements.stepButton.addEventListener('click', async () => {
   }
 })
 elements.apiKey.addEventListener('input', () => clearError())
+elements.proMode.addEventListener('change', () => { elements.refugeCapacity.disabled = !elements.proMode.checked })
+elements.resetButton.addEventListener('click', async () => {
+  const apiKey = elements.apiKey.value.trim()
+  if (!apiKey) { showError('Ingresa la clave de control para crear la ronda.'); return }
+  clearError()
+  elements.resetButton.disabled = true
+  try {
+    observedSlowTurns = 0
+    lastHttpTurnMs = 0
+    const payload = { round: Number(elements.roundSelect.value), pro: elements.proMode.checked }
+    if (payload.pro && elements.refugeCapacity.value !== '') {
+      const capacity = Number(elements.refugeCapacity.value)
+      if (!Number.isInteger(capacity) || capacity < 0 || capacity > 1000) throw new Error('Indica cupos entre 0 y 1000.')
+      payload.refugeCapacities = Object.fromEntries(mapData.refuges.map((refuge) => [refuge.id, capacity]))
+    }
+    render(await fetchJson('/simulacion/reiniciar', { method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-api-key': apiKey }, body: JSON.stringify(payload) }))
+    elements.simulationHelp.textContent = `Ronda ${payload.round} lista${payload.pro ? ' con nivel Pro' : ''}. Pulsa Iniciar simulación.`
+  } catch (error) { showError(error.message) }
+  finally { elements.resetButton.disabled = false }
+})
 
 async function initialize() {
   try {
     await loadMap()
     await refreshState()
     window.setInterval(() => {
-      if (!isRunning) refreshState()
+      if (!isRunning && !turnInFlight) refreshState()
     }, REFRESH_INTERVAL_MS)
   } catch (error) {
     elements.mapMessage.textContent = `No se pudo cargar el mapa: ${error.message}`

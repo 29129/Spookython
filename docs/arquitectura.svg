@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">Arquitectura de Spookython</title>
+  <desc id="desc">Navegador, CloudFront, bucket S3 privado, API Gateway, Lambda, DynamoDB, datos OpenStreetMap y AWS Budgets.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6ee7f9"/></marker>
+    <style>
+      .bg{fill:#0b1220}.box{fill:#121e31;stroke:#4c6485;stroke-width:2;rx:18}.db{fill:#102a35;stroke:#41c8d8;stroke-width:2}.title{font:700 22px system-ui,sans-serif;fill:#f2f6ff}.sub{font:15px system-ui,sans-serif;fill:#b5c5dd}.edge{fill:none;stroke:#6ee7f9;stroke-width:3;marker-end:url(#arrow)}.dashed{stroke-dasharray:8 7}.label{font:14px system-ui,sans-serif;fill:#d6e7ff}.top{font:700 26px system-ui,sans-serif;fill:#fff}
+    </style>
+  </defs>
+  <rect class="bg" width="1200" height="620" rx="22"/>
+  <text class="top" x="52" y="54">Spookython · despliegue AWS us-east-1</text>
+  <rect class="box" x="55" y="145" width="200" height="100"/>
+  <text class="title" x="85" y="185">Navegador</text><text class="sub" x="70" y="215">Panel y simulador HTTP</text>
+  <rect class="box" x="350" y="95" width="220" height="100"/>
+  <text class="title" x="380" y="135">CloudFront</text><text class="sub" x="380" y="165">HTTPS + Origin Access Control</text>
+  <rect class="db" x="695" y="95" width="220" height="100" rx="18"/>
+  <text class="title" x="728" y="135">Amazon S3 privado</text><text class="sub" x="728" y="165">HTML, CSS y JavaScript</text>
+  <rect class="box" x="350" y="300" width="220" height="100"/>
+  <text class="title" x="378" y="340">API Gateway</text><text class="sub" x="378" y="370">HTTP API pública</text>
+  <rect class="box" x="695" y="300" width="220" height="100"/>
+  <text class="title" x="734" y="340">AWS Lambda</text><text class="sub" x="720" y="370">Reglas y planificador Node.js</text>
+  <rect class="db" x="1000" y="300" width="160" height="100" rx="18"/>
+  <text class="title" x="1020" y="340">DynamoDB</text><text class="sub" x="1010" y="370">Estado y reservas</text>
+  <rect class="box" x="695" y="490" width="220" height="76"/>
+  <text class="title" x="739" y="525">AWS Budgets</text><text class="sub" x="750" y="550">USD 5 / mes + alertas</text>
+  <path class="edge" d="M255 170H340"/><text class="label" x="265" y="153">panel HTTPS</text>
+  <path class="edge" d="M570 145H685"/><text class="label" x="582" y="128">OAC privado</text>
+  <path class="edge" d="M255 215C300 215 300 350 340 350"/><text class="label" x="260" y="285">GET / POST</text>
+  <path class="edge" d="M570 350H685"/><text class="label" x="580" y="333">integración Lambda</text>
+  <path class="edge" d="M915 350H990"/><text class="label" x="921" y="333">GetItem / PutItem</text>
+  <path class="edge dashed" d="M805 410V480"/><text class="label" x="818" y="455">alertas de costo</text>
+  <text class="sub" x="55" y="590">El grafo de Manta se empaqueta en el código de Lambda; no se descarga en cada turno.</text>
+</svg>

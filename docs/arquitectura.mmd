@@ -1,0 +1,16 @@
+flowchart LR
+    Browser[Panel y simulador HTTP<br/>navegador o runner]
+    CF[CloudFront<br/>HTTPS + OAC]
+    S3[(S3 privado<br/>panel web)]
+    APIGW[API Gateway<br/>HTTP API]
+    Lambda[Lambda Node.js 22<br/>reglas y planificador]
+    DDB[(DynamoDB<br/>estado, rutas y reservas)]
+    OSM[Datos del mapa<br/>OpenStreetMap empaquetados]
+
+    Browser -->|HTML, CSS, JS| CF
+    CF -->|OAC, acceso privado| S3
+    Browser -->|GET /map, /estado<br/>POST /paso por persona<br/>PREPARE y RESOLVE| APIGW
+    APIGW --> Lambda
+    Lambda -->|GetItem / PutItem| DDB
+    Lambda -.->|mapa incluido en el paquete| OSM
+    Budget[AWS Budgets<br/>USD 5 / mes + avisos]

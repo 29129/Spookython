@@ -1,141 +1,141 @@
-function buildAdjacency(map, blockedStreetIds) {
-  const blocked = new Set(blockedStreetIds)
-  const adjacency = new Map(map.nodes.map((node) => [node.id, []]))
-  for (const street of map.streets) {
-    if (blocked.has(street.id)) continue
-    const edge = { streetId: street.id, distanceM: street.distanceM, speedMps: street.speedMps }
-    adjacency.get(street.fromNode)?.push({ ...edge, nodeId: street.toNode })
-    adjacency.get(street.toNode)?.push({ ...edge, nodeId: street.fromNode })
+const { buildAdjacency } = require('../domain/graph')
+const { dangerNodes, predictRunners } = require('../simulation/zombies')
+
+function push(heap, entry) {
+  heap.push(entry)
+  let index = heap.length - 1
+  while (index > 0) {
+    const parent = (index - 1) >> 1
+    if (heap[parent][1] <= entry[1]) break
+    heap[index] = heap[parent]
+    index = parent
   }
-  for (const edges of adjacency.values()) edges.sort((left, right) => left.streetId.localeCompare(right.streetId))
-  return adjacency
+  heap[index] = entry
+}
+function pop(heap) {
+  const first = heap[0]
+  const last = heap.pop()
+  if (!heap.length) return first
+  let index = 0
+  while (index * 2 + 1 < heap.length) {
+    let child = index * 2 + 1
+    if (child + 1 < heap.length && heap[child + 1][1] < heap[child][1]) child += 1
+    if (heap[child][1] >= last[1]) break
+    heap[index] = heap[child]
+    index = child
+  }
+  heap[index] = last
+  return first
 }
 
-function findBestRoute(startNodeId, map, blockedStreetIds, forbiddenNodeIds) {
+function findBestRoute(startNodeId, map, blockedStreetIds, forbiddenNodeIds, options = {}) {
   const adjacency = buildAdjacency(map, blockedStreetIds)
   if (!adjacency.has(startNodeId)) return null
-
-  const refugeByNodeId = new Map(map.refuges.map((refuge) => [refuge.nodeId, refuge]))
+  const refugeByNodeId = new Map(map.refuges.filter((refuge) =>
+    !options.refugeIds || options.refugeIds.includes(refuge.id),
+  ).map((refuge) => [refuge.nodeId, refuge]))
   const distances = new Map([[startNodeId, 0]])
   const previous = new Map()
-  const unsettled = new Set(adjacency.keys())
+  const settled = new Set()
+  const heap = [[startNodeId, 0]]
   let destinationNodeId = null
-
-  while (unsettled.size > 0) {
-    let currentNodeId = null
-    let currentDistance = Infinity
-    for (const nodeId of unsettled) {
-      const distance = distances.get(nodeId) ?? Infinity
-      if (distance < currentDistance) {
-        currentDistance = distance
-        currentNodeId = nodeId
-      }
-    }
-    if (currentNodeId === null || !Number.isFinite(currentDistance)) break
-    unsettled.delete(currentNodeId)
-    if (refugeByNodeId.has(currentNodeId)) {
-      destinationNodeId = currentNodeId
-      break
-    }
-
-    for (const edge of adjacency.get(currentNodeId) || []) {
-      if (!unsettled.has(edge.nodeId)) continue
-      if (edge.nodeId !== startNodeId && forbiddenNodeIds.has(edge.nodeId)) continue
-      const cost = edge.distanceM / edge.speedMps
-      const nextDistance = currentDistance + cost
-      if (nextDistance < (distances.get(edge.nodeId) ?? Infinity)) {
-        distances.set(edge.nodeId, nextDistance)
-        previous.set(edge.nodeId, { nodeId: currentNodeId, streetId: edge.streetId })
+  while (heap.length) {
+    const [current, cost] = pop(heap)
+    if (settled.has(current) || cost !== distances.get(current)) continue
+    settled.add(current)
+    if (refugeByNodeId.has(current) && !forbiddenNodeIds.has(current)) { destinationNodeId = current; break }
+    for (const edge of adjacency.get(current) || []) {
+      if (settled.has(edge.nodeId) || forbiddenNodeIds.has(edge.nodeId)) continue
+      if (current === startNodeId && (options.avoidFirstNodes?.has(edge.nodeId)
+        || options.avoidFirstStreets?.has(edge.streetId))) continue
+      const nextCost = cost + edge.distanceM / edge.speedMps + (options.penalties?.get(edge.nodeId) || 0)
+      if (nextCost < (distances.get(edge.nodeId) ?? Infinity)) {
+        distances.set(edge.nodeId, nextCost)
+        previous.set(edge.nodeId, { nodeId: current, streetId: edge.streetId })
+        push(heap, [edge.nodeId, nextCost])
       }
     }
   }
-
-  if (!destinationNodeId) return null
+  if (destinationNodeId === null) return null
   const routeNodeIds = [destinationNodeId]
   const routeStreetIds = []
-  let cursor = destinationNodeId
-  while (cursor !== startNodeId) {
+  for (let cursor = destinationNodeId; cursor !== startNodeId;) {
     const step = previous.get(cursor)
     if (!step) return null
     routeStreetIds.push(step.streetId)
+    routeNodeIds.push(step.nodeId)
     cursor = step.nodeId
-    routeNodeIds.push(cursor)
   }
-  routeNodeIds.reverse()
-  routeStreetIds.reverse()
-  return {
-    routeNodeIds,
-    routeStreetIds,
-    refugeId: refugeByNodeId.get(destinationNodeId).id,
-    estimatedSeconds: distances.get(destinationNodeId),
-  }
+  return { routeNodeIds: routeNodeIds.reverse(), routeStreetIds: routeStreetIds.reverse(),
+    refugeId: refugeByNodeId.get(destinationNodeId).id, estimatedSeconds: distances.get(destinationNodeId) }
 }
 
-function cachedRouteIndex(cache, currentNodeId, map, blockedStreetIds, forbiddenNodeIds) {
-  if (!cache || cache.mapVersion !== map.metadata.sourceTimestamp) return -1
-  if (!Array.isArray(cache.routeNodeIds) || !Array.isArray(cache.routeStreetIds)) return -1
-  if (cache.routeNodeIds.length !== cache.routeStreetIds.length + 1) return -1
-  if (!map.refuges.some((refuge) => refuge.id === cache.refugeId && refuge.nodeId === cache.routeNodeIds.at(-1))) return -1
+function routeOptions(input, map, state) {
+  const predictedNodes = new Set(predictRunners(map, state).flatMap((prediction) => prediction.nodeIds))
+  const avoidFirstStreets = new Set((state.zombieMovements || [])
+    .filter((movement) => movement.toNodeId === input.nodoActual).map((movement) => movement.streetId))
+  const options = { avoidFirstNodes: predictedNodes, avoidFirstStreets,
+    penalties: new Map([...predictedNodes].map((node) => [node, 300])) }
+  if (state.pro) options.refugeIds = state.reservations?.[input.sobrevivienteId]
+    ? [state.reservations[input.sobrevivienteId]] : []
+  return options
+}
 
-  const startIndex = cache.routeNodeIds.indexOf(currentNodeId)
-  if (startIndex < 0) return -1
-  const blocked = new Set(blockedStreetIds)
+function cachedRouteIndex(cache, input, map, state, forbidden, options) {
+  if (!cache || cache.mapVersion !== map.metadata.sourceTimestamp) return -1
+  if (cache.sessionId && cache.sessionId !== state.sessionId) return -1
+  if (!Array.isArray(cache.routeNodeIds) || !Array.isArray(cache.routeStreetIds)
+    || cache.routeNodeIds.length !== cache.routeStreetIds.length + 1) return -1
+  if (options.refugeIds && !options.refugeIds.includes(cache.refugeId)) return -1
+  if (!map.refuges.some((refuge) => refuge.id === cache.refugeId && refuge.nodeId === cache.routeNodeIds.at(-1))) return -1
+  const index = cache.routeNodeIds.indexOf(input.nodoActual)
+  if (index < 0) return -1
+  const blocked = new Set(state.blockedStreetIds)
   const streets = new Map(map.streets.map((street) => [street.id, street]))
-  for (let index = startIndex; index < cache.routeStreetIds.length; index += 1) {
-    const street = streets.get(cache.routeStreetIds[index])
-    const fromNodeId = cache.routeNodeIds[index]
-    const toNodeId = cache.routeNodeIds[index + 1]
-    if (!street || blocked.has(street.id)) return -1
-    const connects = (street.fromNode === fromNodeId && street.toNode === toNodeId)
-      || (street.fromNode === toNodeId && street.toNode === fromNodeId)
-    if (!connects || forbiddenNodeIds.has(toNodeId)) return -1
+  for (let cursor = index; cursor < cache.routeStreetIds.length; cursor += 1) {
+    const street = streets.get(cache.routeStreetIds[cursor])
+    const from = cache.routeNodeIds[cursor]
+    const to = cache.routeNodeIds[cursor + 1]
+    if (!street || blocked.has(street.id) || forbidden.has(to)) return -1
+    if (!((street.fromNode === from && street.toNode === to) || (street.toNode === from && street.fromNode === to))) return -1
+    if (cursor === index && (options.avoidFirstNodes.has(to) || options.avoidFirstStreets.has(street.id))) return -1
   }
-  return startIndex
+  return index
+}
+
+function validateStepInput(input, map) {
+  const invalid = (message) => { throw Object.assign(new Error(message), { name: 'InvalidStepRequestError' }) }
+  if (!input || typeof input !== 'object' || Array.isArray(input)) invalid('El cuerpo debe ser un objeto JSON.')
+  if (typeof input.sobrevivienteId !== 'string' || !input.sobrevivienteId.trim() || input.sobrevivienteId.length > 128) invalid('sobrevivienteId debe ser un texto de 1 a 128 caracteres.')
+  if (!map.nodes.some((node) => node.id === input.nodoActual)) invalid('nodoActual no pertenece al mapa de Manta.')
+  if (!Number.isInteger(input.turno) || input.turno < 0) invalid('turno debe ser un entero mayor o igual a cero.')
 }
 
 function planNextStep(input, map, state, cachedRoute) {
-  if (!input || typeof input !== 'object' || Array.isArray(input)) {
-    throw Object.assign(new Error('El cuerpo debe ser un objeto JSON.'), { name: 'InvalidStepRequestError' })
-  }
-  const { sobrevivienteId, nodoActual, turno } = input
-  if (typeof sobrevivienteId !== 'string' || sobrevivienteId.trim().length === 0 || sobrevivienteId.length > 128) {
-    throw Object.assign(new Error('sobrevivienteId debe ser un texto de 1 a 128 caracteres.'), { name: 'InvalidStepRequestError' })
-  }
-  if (typeof nodoActual !== 'string' || !map.nodes.some((node) => node.id === nodoActual)) {
-    throw Object.assign(new Error('nodoActual no pertenece al mapa de Manta.'), { name: 'InvalidStepRequestError' })
-  }
-  if (!Number.isInteger(turno) || turno < 0) {
-    throw Object.assign(new Error('turno debe ser un entero mayor o igual a cero.'), { name: 'InvalidStepRequestError' })
-  }
-
-  const blockedStreetIds = state.blockedStreetIds || []
-  const forbiddenNodeIds = new Set(
-    (state.zombies || [])
-      .filter((zombie) => !zombie.asleep)
-      .map((zombie) => zombie.nodeId),
-  )
-  const cachedIndex = cachedRouteIndex(cachedRoute, nodoActual, map, blockedStreetIds, forbiddenNodeIds)
-  if (cachedIndex >= 0) {
-    return {
-      siguienteNodo: cachedRoute.routeNodeIds[cachedIndex + 1] || nodoActual,
-      routeCache: cachedRoute,
-      cacheHit: true,
-    }
-  }
-
-  const route = findBestRoute(nodoActual, map, blockedStreetIds, forbiddenNodeIds)
-  if (!route) return { siguienteNodo: nodoActual, routeCache: null, cacheHit: false }
-  return {
-    siguienteNodo: route.routeNodeIds[1] || nodoActual,
-    routeCache: {
-      routeNodeIds: route.routeNodeIds,
-      routeStreetIds: route.routeStreetIds,
-      refugeId: route.refugeId,
-      mapVersion: map.metadata.sourceTimestamp,
-      estimatedSeconds: route.estimatedSeconds,
-    },
-    cacheHit: false,
-  }
+  validateStepInput(input, map)
+  const forbidden = dangerNodes(map, state)
+  const options = routeOptions(input, map, state)
+  const index = cachedRouteIndex(cachedRoute, input, map, state, forbidden, options)
+  if (index >= 0) return { siguienteNodo: cachedRoute.routeNodeIds[index + 1] || input.nodoActual, routeCache: cachedRoute, cacheHit: true }
+  const route = findBestRoute(input.nodoActual, map, state.blockedStreetIds || [], forbidden, options)
+  if (!route) return { siguienteNodo: input.nodoActual, routeCache: null, cacheHit: false }
+  return { siguienteNodo: route.routeNodeIds[1] || input.nodoActual,
+    routeCache: { ...route, mapVersion: map.metadata.sourceTimestamp, sessionId: state.sessionId }, cacheHit: false }
 }
 
-module.exports = { findBestRoute, planNextStep }
+function survivorRouteCache(survivor, map, state) {
+  const routeNodeIds = survivor.routeNodeIds || []
+  const blocked = new Set(state.blockedStreetIds)
+  const routeStreetIds = []
+  for (let index = 0; index < routeNodeIds.length - 1; index += 1) {
+    const street = map.streets.find((item) => !blocked.has(item.id)
+      && ((item.fromNode === routeNodeIds[index] && item.toNode === routeNodeIds[index + 1])
+        || (item.toNode === routeNodeIds[index] && item.fromNode === routeNodeIds[index + 1])))
+    if (!street) return null
+    routeStreetIds.push(street.id)
+  }
+  return { routeNodeIds, routeStreetIds, refugeId: survivor.refugeId,
+    mapVersion: map.metadata.sourceTimestamp, sessionId: state.sessionId }
+}
+
+module.exports = { findBestRoute, planNextStep, survivorRouteCache, validateStepInput }

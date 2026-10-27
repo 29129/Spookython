@@ -19,6 +19,21 @@
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 320px; min-height: 100vh; background: radial-gradient(ellipse at 55% -30%, #1b2144 0%, #0a1120 46%, #080d19 78%); }
 button, input { font: inherit; }
+select { font: inherit; }
+.control-card select { width: 100%; padding: 10px; color: #edf2fc; background: #0b1423; border: 1px solid #30415b; border-radius: 9px; }
+.control-card .field-label { margin-top: 12px; }
+.pro-toggle { display: flex; align-items: center; gap: 8px; margin-top: 14px; font-size: 12px; }
+.pro-toggle input { width: auto; }
+#resetButton { margin-top: 12px; }
+.refuge-status { color: #b7c2d5; font-size: 11px; line-height: 1.6; }
+#proPanel[hidden] { display: none; }
+.vehicle-mark { fill: #ffdf75; stroke: #fff3c7; stroke-width: 1; }
+.vehicle-route { stroke: #ffdf75; opacity: .8; }
+.legend-truck { width: 12px; height: 7px; background: #ffdf75; border-radius: 2px; }
+.legend-prediction { width: 10px; height: 10px; border: 1px dashed #ffaf60; border-radius: 50%; }
+.horde-zone { fill: rgba(189,118,255,.12); stroke: #bd76ff; stroke-width: 1; pointer-events: none; }
+.runner-prediction { fill: none; stroke: #ffaf60; stroke-width: 1.5; stroke-dasharray: 3 3; pointer-events: none; }
+.closed-street-marker { fill: #ff6679; font: 700 13px system-ui; text-anchor: middle; }
 .shell { width: min(1500px, calc(100% - 52px)); margin: 0 auto; }
 .topbar { height: 86px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(138, 158, 196, .16); }
 .brand { display: flex; align-items: center; gap: 12px; color: inherit; text-decoration: none; }

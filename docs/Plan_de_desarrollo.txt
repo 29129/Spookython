@@ -19,7 +19,7 @@ Objetivo: responder la consulta del simulador para cada sobreviviente.
 - Protegerlo con x-api-key.
 - Calcular rutas a los refugios con Dijkstra o A*, considerando distancia y tipo de calle.
 - Devolver el siguiente nodo solo si es el mismo nodo o un vecino conectado por una calle no bloqueada.
-- Evitar zombis visibles y el nodo de la horda; no bloquear automáticamente todos sus vecinos.
+- Evitar zombis visibles y bloquear el nodo de la horda y todos sus vecinos, conforme a las reglas del mundo del reto.
 - Guardar o reutilizar las rutas para no recalcular todo en cada turno.
 Listo cuando: el simulador recibe una respuesta válida por sobreviviente y el endpoint responde en menos de 500 ms en las pruebas locales.
 Día 2
@@ -46,4 +46,4 @@ Objetivo: dejar todo accesible y explicable antes del cierre.
 - Hacer una prueba de presentación de 5 minutos y preparar respuestas para los 3 minutos de preguntas.
 Listo cuando: el repositorio público contiene código e historial de commits, la aplicación funciona en su URL pública y los entregables están cargados antes de la hora límite.
 Qué dejamos fuera
-No vamos a implementar predicción avanzada de corredores, capacidad inteligente de refugios, camionetas de rescate, animaciones elaboradas ni funciones que no aparecen en los criterios obligatorios. Si sobra tiempo después del Sprint 6, reevaluamos; antes de eso, cada hora se dedica a los requisitos base y a la prueba de fuego.
+El usuario autorizó añadir el nivel Pro el 26/10/2026 después de contrastar el reto original. Se añaden predicción de corredores, reservas de capacidad en refugios y cinco camionetas con cuatro plazas que avanzan dos calles por turno. El modo base se conserva y el despliegue/rendimiento concurrente de la versión nueva deben verificarse antes de afirmar cumplimiento completo.

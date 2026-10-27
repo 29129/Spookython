@@ -2,10 +2,14 @@ import * as path from 'node:path'
 import * as cdk from 'aws-cdk-lib'
 import * as apigwv2 from 'aws-cdk-lib/aws-apigatewayv2'
 import { HttpLambdaIntegration } from 'aws-cdk-lib/aws-apigatewayv2-integrations'
+import * as cloudfront from 'aws-cdk-lib/aws-cloudfront'
+import * as origins from 'aws-cdk-lib/aws-cloudfront-origins'
 import * as dynamodb from 'aws-cdk-lib/aws-dynamodb'
 import * as lambda from 'aws-cdk-lib/aws-lambda'
 import * as nodejs from 'aws-cdk-lib/aws-lambda-nodejs'
 import * as logs from 'aws-cdk-lib/aws-logs'
+import * as s3 from 'aws-cdk-lib/aws-s3'
+import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment'
 import { Construct } from 'constructs'
 
 export class SpookythonStack extends cdk.Stack {
@@ -18,6 +22,7 @@ export class SpookythonStack extends cdk.Stack {
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: false },
+      timeToLiveAttribute: 'expiresAt',
     })
 
     const apiLogGroup = new logs.LogGroup(this, 'ApiHandlerLogGroup', {
@@ -58,9 +63,37 @@ export class SpookythonStack extends cdk.Stack {
     api.addRoutes({ path: '/estado', methods: [apigwv2.HttpMethod.GET], integration })
     api.addRoutes({ path: '/estado/avanzar', methods: [apigwv2.HttpMethod.POST], integration })
     api.addRoutes({ path: '/paso', methods: [apigwv2.HttpMethod.POST], integration })
+    api.addRoutes({ path: '/simulacion/reiniciar', methods: [apigwv2.HttpMethod.POST], integration })
+
+    const webBucket = new s3.Bucket(this, 'WebAssetsBucket', {
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      enforceSSL: true,
+      versioned: false,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
+    })
+    const webDistribution = new cloudfront.Distribution(this, 'WebDistribution', {
+      defaultRootObject: 'index.html',
+      priceClass: cloudfront.PriceClass.PRICE_CLASS_200,
+      defaultBehavior: {
+        origin: origins.S3BucketOrigin.withOriginAccessControl(webBucket),
+        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        compress: true,
+      },
+      comment: 'Spookython mapa público',
+    })
+    new s3deploy.BucketDeployment(this, 'DeployWebAssets', {
+      sources: [s3deploy.Source.asset(path.join(__dirname, '../../web'))],
+      destinationBucket: webBucket,
+      distribution: webDistribution,
+      distributionPaths: ['/*'],
+      prune: true,
+    })
 
     new cdk.CfnOutput(this, 'ApiBaseUrl', { value: api.apiEndpoint })
     new cdk.CfnOutput(this, 'WorldStateTableName', { value: worldStateTable.tableName })
+    new cdk.CfnOutput(this, 'WebUrl', { value: `https://${webDistribution.distributionDomainName}` })
 
     const budgetEmail = process.env.BUDGET_ALERT_EMAIL
     const monthlyBudgetUsd = process.env.MONTHLY_BUDGET_USD

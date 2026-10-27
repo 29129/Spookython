@@ -6,7 +6,7 @@ import { performance } from 'node:perf_hooks'
 
 const require = createRequire(import.meta.url)
 const map = require('../src/data/manta.graph.json')
-const { advanceWorld, createInitialState } = require('../src/simulation/engine.js')
+const { advanceWorld, createInitialState, prepareWorld, resolveWorld } = require('../src/simulation/engine.js')
 const { findBestRoute } = require('../src/routing/planner.js')
 
 const MAX_TURNS = 150
@@ -60,7 +60,7 @@ function runCityEventScenario(type) {
 }
 
 function runSleeperScenario() {
-  const state = createInitialState(map, 'scenario-sleeper', 1)
+  const state = createInitialState(map, 'scenario-sleeper', 1, { round: 3 })
   const sleeper = state.zombies.find((zombie) => zombie.type === 'SLEEPER')
   state.zombies = [sleeper]
   const neighbor = adjacency.get(sleeper.nodeId)?.[0]
@@ -120,7 +120,8 @@ function runCrossingScenario() {
   survivor.nodeId = crossing.toNode
   survivor.refugeId = crossing.route.refugeId
   survivor.routeNodeIds = [crossing.toNode, ...crossing.route.routeNodeIds]
-  const result = advanceWorld(state, map, { type: 'NONE' })
+  const prepared = prepareWorld(state, map, { type: 'NONE' })
+  const result = resolveWorld(prepared, map, [{ survivorId: survivor.id, siguienteNodo: crossing.fromNode, durationMs: 0 }])
   const resolved = result.survivors.find((candidate) => candidate.id === survivor.id)
   return validateScenario(
     'OPPOSITE_CROSSING',
@@ -129,13 +130,12 @@ function runCrossingScenario() {
   )
 }
 
-function runRound(survivorCount) {
-  let state = createInitialState(map, `fire-drill-${survivorCount}`, survivorCount)
+function runRound(survivorCount, pro = false) {
+  let state = createInitialState(map, `fire-drill-${survivorCount}`, survivorCount, { pro })
   const survivorsAtStart = new Map(state.survivors.map((survivor) => [survivor.id, survivor.nodeId]))
   const baselineSteps = new Map(
     state.survivors.map((survivor) => [survivor.id, shortestStepsToShelter(survivor.nodeId)]),
   )
-  const movementSteps = new Map(state.survivors.map((survivor) => [survivor.id, 0]))
   const routeLatenciesMs = []
   let routeRecalculations = 0
   let invalidMoves = 0
@@ -143,8 +143,7 @@ function runRound(survivorCount) {
   const startedAt = performance.now()
 
   for (let turn = 0; turn < MAX_TURNS; turn += 1) {
-    if (!state.survivors.some((survivor) => survivor.status === 'ACTIVE')) break
-    const previousNodes = new Map(state.survivors.map((survivor) => [survivor.id, survivor.nodeId]))
+    if (state.roundFinished) break
     try {
       state = advanceWorld(state, map, undefined, {
         onRouteDecision: ({ durationMs, cacheHit }) => {
@@ -158,14 +157,12 @@ function runRound(survivorCount) {
     }
 
     const blocked = new Set(state.blockedStreetIds)
-    for (const survivor of state.survivors) {
-      const previousNode = previousNodes.get(survivor.id)
-      if (survivor.nodeId === previousNode) continue
-      movementSteps.set(survivor.id, movementSteps.get(survivor.id) + 1)
+    for (const movement of [...(state.survivorMovements || []), ...(state.vehicleMovements || [])]) {
       const validEdge = map.streets.some((street) =>
         !blocked.has(street.id)
-        && ((street.fromNode === previousNode && street.toNode === survivor.nodeId)
-          || (street.toNode === previousNode && street.fromNode === survivor.nodeId)),
+        && street.id === movement.streetId
+        && ((street.fromNode === movement.fromNodeId && street.toNode === movement.toNodeId)
+          || (street.toNode === movement.fromNodeId && street.fromNode === movement.toNodeId)),
       )
       if (!validEdge) invalidMoves += 1
     }
@@ -174,13 +171,13 @@ function runRound(survivorCount) {
   const elapsedMs = performance.now() - startedAt
   const rescued = state.survivors.filter((survivor) => survivor.status === 'RESCUED').length
   const bitten = state.survivors.filter((survivor) => survivor.status === 'BITTEN').length
-  const active = state.survivors.filter((survivor) => survivor.status === 'ACTIVE').length
+  const active = state.survivors.filter((survivor) => ['ACTIVE', 'ONBOARD'].includes(survivor.status)).length
   const efficiencies = state.survivors
     .filter((survivor) => survivor.status === 'RESCUED')
     .map((survivor) => {
       const shortest = baselineSteps.get(survivor.id)
-      const moved = movementSteps.get(survivor.id)
-      return shortest !== null && moved > 0 ? (shortest / moved) * 100 : null
+      const elapsedTurns = survivor.rescuedTurn
+      return shortest !== null && elapsedTurns > 0 ? Math.min(100, (shortest / elapsedTurns) * 100) : null
     })
     .filter((value) => value !== null)
 
@@ -188,9 +185,11 @@ function runRound(survivorCount) {
   const routeDecisionsOver500Ms = routeLatenciesMs.filter((latency) => latency > 500).length
   return {
     survivorCount,
+    pro,
+    round: state.round,
     turns: state.turn,
     durationSecondsAtGameSpeed: state.turn * 2,
-    completed: active === 0,
+    completed: state.roundFinished,
     rescued,
     bitten,
     activeAtEnd: active,
@@ -208,8 +207,10 @@ function runRound(survivorCount) {
     routeDecisionsOver500Ms,
     invalidMoves,
     engineErrors,
-    timedOut: active > 0 && state.turn >= MAX_TURNS,
-    passed: active === 0 && engineErrors === 0 && invalidMoves === 0
+    reachedTurnLimit: active > 0 && state.turn >= MAX_TURNS,
+    refugeOverflow: state.refuges.some((refuge) => refuge.capacity !== null && refuge.occupied > refuge.capacity),
+    pickedUpByVehicles: state.vehicles.reduce((sum, vehicle) => sum + vehicle.totalPickedUp, 0),
+    passed: state.roundFinished && engineErrors === 0 && invalidMoves === 0
       && routeDecisionP95Ms !== null && routeDecisionP95Ms <= 500,
     localExecutionMs: Number(elapsedMs.toFixed(2)),
     baselineSurvivors: survivorsAtStart.size,
@@ -223,7 +224,7 @@ async function main() {
     runSleeperScenario(),
     runCrossingScenario(),
   ]
-  const rounds = COHORTS.map(runRound)
+  const rounds = COHORTS.flatMap((count) => [runRound(count, false), runRound(count, true)])
   const report = {
     generatedAt: new Date().toISOString(),
     map: map.metadata.name,
@@ -234,7 +235,7 @@ async function main() {
     rounds,
   }
 
-  const reportsDirectory = path.join(root, 'reports', 'sprint-5')
+  const reportsDirectory = path.join(root, 'reports', 'audit')
   await mkdir(reportsDirectory, { recursive: true })
   const reportPath = path.join(reportsDirectory, 'fire-drill-latest.json')
   await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8')

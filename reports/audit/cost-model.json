@@ -1,0 +1,37 @@
+{
+  "dateOfRateCheck": "2026-10-26",
+  "region": "us-east-1",
+  "suitesPerMonth": 2,
+  "turns": 150,
+  "stepRequests": 90000,
+  "phaseRequests": 1800,
+  "resets": 6,
+  "requests": 91806,
+  "snapshotBytesAssumed": 102400,
+  "lambdaDurationSecondsAssumed": 0.2,
+  "lambdaMemoryGb": 0.5,
+  "readUnits": 2295150,
+  "writeUnits": 180600,
+  "prices": {
+    "httpApiPerMillion": 1,
+    "lambdaArmGbSecond": 0.0000133334,
+    "lambdaPerMillion": 0.2,
+    "dynamodbReadPerMillion": 0.125,
+    "dynamodbWritePerMillion": 0.625
+  },
+  "estimatedUsdBeforeFreeTier": {
+    "api": 0.091806,
+    "lambda": 0.14076981204,
+    "dynamodb": 0.39976875,
+    "subtotal": 0.63234456204
+  },
+  "excluded": [
+    "S3",
+    "CloudFront",
+    "CloudWatch",
+    "transferencia de datos",
+    "despliegues",
+    "impuestos"
+  ],
+  "accountActualCost": "No se consulta en este script. Ver la captura de Cost Explorer y sus límites de atribución."
+}
