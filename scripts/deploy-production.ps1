@@ -33,7 +33,7 @@ try {
     if (-not $env:MONTHLY_BUDGET_USD) { $env:MONTHLY_BUDGET_USD = '5' }
     $env:SPOOKYTHON_LAMBDA_MEMORY_MB = '1024'
     $env:SPOOKYTHON_PROVISIONED_CONCURRENCY = '0'
-    $env:SPOOKYTHON_DEPLOYMENT_LABEL = 'refugio-3d-600-20261028'
+    $env:SPOOKYTHON_DEPLOYMENT_LABEL = 'refugio-compact-edge-20261028'
     Write-Host 'Refugio 593: mapa de 600 nodos, Lambda 1024 MB, capacidad bajo demanda. No se imprime la clave.'
     if ($Action -eq 'Diff') {
         & npx.cmd cdk diff SpookythonStack --profile $Profile
@@ -44,6 +44,8 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Fallo la sintesis; no se despliega.' }
     & node scripts/validate-lambda-bundle.mjs
     if ($LASTEXITCODE -ne 0) { throw 'Paquete Lambda invalido; no se despliega.' }
+    & node scripts/validate-api-edge.mjs
+    if ($LASTEXITCODE -ne 0) { throw 'Configuracion CloudFront invalida; no se despliega.' }
     & npx.cmd cdk deploy SpookythonStack --profile $Profile --require-approval never
     if ($LASTEXITCODE -ne 0) { throw 'Fallo el despliegue. Revisar los eventos del stack antes de reintentar.' }
     $base = 'https://gkzb014d54.execute-api.us-east-1.amazonaws.com'

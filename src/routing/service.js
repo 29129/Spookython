@@ -2,6 +2,20 @@ const { validateStepInput } = require('./request')
 
 async function getNextStep(input, map, store = require('../simulation/store')) {
   validateStepInput(input, map)
+  const compact = await store.readStepState?.(input.sobrevivienteId)
+  if (compact?.stepDecisions && compact.phase === 'DECIDING' && compact.schemaVersion === 2) {
+    if (input.turno !== compact.turn) throw Object.assign(new Error('El turno consultado ya no es el actual.'), { name: 'StaleTurnError' })
+    const decision = Object.hasOwn(compact.stepDecisions, input.sobrevivienteId) ? compact.stepDecisions[input.sobrevivienteId] : null
+    if (decision) {
+      const [node, status, next] = decision
+      if (node !== input.nodoActual) throw Object.assign(new Error('nodoActual no coincide con la posición guardada.'), { name: 'InvalidStepRequestError' })
+      if (status !== 'ACTIVE' || next === node) return node
+      const allowed = map.streets.some((street) => !compact.blockedStreetIds.includes(street.id)
+        && ((street.fromNode === node && street.toNode === next) || (street.toNode === node && street.fromNode === next)))
+      return allowed && !compact.dangerNodeIds.includes(next) ? next : node
+    }
+  }
+  // Compatibility for existing snapshots, READY phase and external survivor IDs.
   const state = await store.getOrCreateWorldState(() => require('../simulation/engine').createInitialState(map))
   if (input.turno !== state.turn) throw Object.assign(new Error('El turno consultado ya no es el actual.'), { name: 'StaleTurnError' })
   const survivor = state.survivors.find((item) => item.id === input.sobrevivienteId)

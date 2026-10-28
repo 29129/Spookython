@@ -1,17 +1,19 @@
 flowchart LR
     Browser[Panel y simulador HTTP<br/>MapLibre + Three.js en web<br/>navegador o runner]
-    CF[CloudFront<br/>HTTPS + OAC]
+    CF[CloudFront<br/>web + API sin cache]
     S3[(S3 privado<br/>panel web)]
     APIGW[API Gateway<br/>HTTP API]
     Lambda[Lambda Node.js 22<br/>reglas y planificador]
-    DDB[(DynamoDB<br/>estado, rutas y reservas)]
+    DDB[(DynamoDB<br/>estado y decisiones compactas atomicas)]
     OSM[Datos del mapa<br/>OpenStreetMap empaquetados]
 
     Browser -->|HTML, CSS, JS| CF
     Basemap[OpenFreeMap / OpenStreetMap<br/>fondo geográfico externo]
     Browser -->|MapLibre: estilo, teselas y fuentes| Basemap
     CF -->|OAC, acceso privado| S3
-    Browser -->|GET /map, /estado<br/>POST /paso por persona<br/>PREPARE y RESOLVE| APIGW
+    Browser -->|/api/* HTTPS| CF
+    CF -->|sin cache, x-api-key<br/>elimina prefijo /api| APIGW
+    Browser -.->|endpoint directo para comparar| APIGW
     APIGW --> Lambda
     Lambda -->|GetItem / PutItem| DDB
     Lambda -.->|mapa incluido en el paquete| OSM

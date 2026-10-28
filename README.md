@@ -170,3 +170,7 @@ Salidas: `ApiBaseUrl`, `WebUrl` y `WorldStateTableName`. Esta revisión añade l
 Pendientes externos para cerrar la entrega: completar la clave del simulador en la sección de acceso para evaluación, publicar los cambios en el repositorio y cargar los enlaces y el PDF en la plataforma antes del 28/10/2026 a las 10:00 de Ecuador. La evidencia de Budget está incorporada. Las tres rondas oficiales con la configuración final y la conciliación del gasto real no quedan acreditadas por el ensayo parcial. El equipo debe ensayar cinco minutos de pitch y tres de preguntas.
 
 La demo comparte un mundo, no implementa cuentas ni partidas privadas. El mapa y refugios son de demostración; las velocidades y cupos son supuestos. El Budget de USD 5 avisa, pero no detiene gastos. Los datos actuales de Cost Explorer mezclan esta aplicación con servicios del sistema anterior y están redondeados; no demuestran costo cero de Refugio 593.
+
+## Optimizacion de latencia
+
+API disponible por CloudFront, sin cache de decisiones; el endpoint directo sigue siendo el predeterminado hasta demostrar una mejora en la comparacion autenticada. Consulta [objetivo de 150 ms, pruebas A-B-B-A y comparacion regional](docs/latencia-150ms.md). Esta implementacion no certifica el umbral hasta ejecutar el ensayo autenticado con 200 personas desde el equipo evaluado.

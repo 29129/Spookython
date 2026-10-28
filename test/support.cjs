@@ -8,7 +8,18 @@ class MemoryDynamo {
   async send(command) {
     const input = command.input
     const key = JSON.stringify([input.Key?.worldId || input.Item.worldId, input.Key?.entityId || input.Item.entityId])
-    if (command.constructor.name === 'GetCommand') return { Item: structuredClone(this.items.get(key)) }
+    if (command.constructor.name === 'GetCommand') {
+      const item = structuredClone(this.items.get(key))
+      if (!item || !input.ProjectionExpression) return { Item: item }
+      const projected = {}
+      for (const field of input.ProjectionExpression.split(',')) {
+        const [name, child] = field.trim().split('.').map((part) => input.ExpressionAttributeNames?.[part] || part)
+        if (!Object.hasOwn(item, name)) continue
+        if (!child) projected[name] = item[name]
+        else if (Object.hasOwn(item[name], child)) projected[name] = { ...projected[name], [child]: item[name][child] }
+      }
+      return { Item: projected }
+    }
     const previous = this.items.get(key)
     const values = input.ExpressionAttributeValues
     let valid = true

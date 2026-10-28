@@ -12,7 +12,7 @@
   <rect class="box" x="55" y="145" width="200" height="100"/>
   <text class="title" x="85" y="185">Navegador</text><text class="sub" x="70" y="215">Panel y simulador HTTP</text><text class="sub" x="70" y="235">MapLibre + Three.js</text>
   <rect class="box" x="350" y="95" width="220" height="100"/>
-  <text class="title" x="380" y="135">CloudFront</text><text class="sub" x="380" y="165">HTTPS + Origin Access Control</text>
+  <text class="title" x="380" y="135">CloudFront</text><text class="sub" x="370" y="165">Web + /api/* sin cache</text>
   <rect class="db" x="695" y="95" width="220" height="100" rx="18"/>
   <text class="title" x="728" y="135">Amazon S3 privado</text><text class="sub" x="728" y="165">HTML, CSS y JavaScript</text>
   <rect class="box" x="350" y="300" width="220" height="100"/>
@@ -25,7 +25,8 @@
   <text class="title" x="739" y="525">AWS Budgets</text><text class="sub" x="750" y="550">USD 5 / mes + alertas</text>
   <path class="edge" d="M255 170H340"/><text class="label" x="265" y="153">panel HTTPS</text>
   <path class="edge" d="M570 145H685"/><text class="label" x="582" y="128">OAC privado</text>
-  <path class="edge" d="M255 215C300 215 300 350 340 350"/><text class="label" x="260" y="285">GET / POST</text>
+  <path class="edge dashed" d="M255 215C300 215 300 350 340 350"/><text class="label" x="260" y="285">Directo</text>
+  <path class="edge" d="M460 195V290"/><text class="label" x="475" y="247">API sin cache + x-api-key</text>
   <path class="edge" d="M570 350H685"/><text class="label" x="580" y="333">integración Lambda</text>
   <path class="edge" d="M915 350H990"/><text class="label" x="921" y="333">GetItem / PutItem</text>
   <path class="edge dashed" d="M805 410V480"/><text class="label" x="818" y="455">alertas de costo</text>

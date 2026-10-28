@@ -1,0 +1,369 @@
+{
+  "generatedAt": "2026-10-28T14:37:31.058Z",
+  "source": "HTTP/2 desde este equipo, 25 peticiones secuenciales por endpoint, sin clave ni mutaciones.",
+  "limitation": "GET /health no lee DynamoDB ni demuestra latencia de POST /paso con 200 personas. Incluye primeros accesos y fallos.",
+  "results": [
+    {
+      "endpoint": "https://gkzb014d54.execute-api.us-east-1.amazonaws.com",
+      "p95HealthHttpMs": 138.22,
+      "samples": [
+        {
+          "httpMs": 345.0006,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.24,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 137.2111,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.03,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 115.40680000000009,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.03,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 123.07899999999995,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.03,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 122.76210000000003,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.02,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 122.67139999999995,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.29,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 129.22209999999995,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.04,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 127.53950000000009,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.02,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 130.2458999999999,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.02,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 138.2231999999999,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.03,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 111.68099999999981,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.03,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 123.01670000000013,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.03,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 122.37169999999992,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.02,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 114.27410000000009,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.02,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 120.94720000000007,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.03,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 123.29510000000028,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.02,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 117.12670000000026,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.02,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 119.20359999999982,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.02,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 118.47500000000036,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.03,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 133.32900000000018,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.03,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 116.6255000000001,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.02,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 126.80659999999989,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.02,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 125.96209999999974,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.03,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 123.60690000000022,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.02,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 123.4031,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.03,
+          "firstInvocation": "false"
+        }
+      ]
+    },
+    {
+      "endpoint": "https://d2qqi0nkfeyck5.cloudfront.net/api",
+      "p95HealthHttpMs": 166.05,
+      "samples": [
+        {
+          "httpMs": 412.5454,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.02,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 166.04620000000023,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.03,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 117.17789999999968,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.02,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 121.0632000000005,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.03,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 157.84289999999964,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.08,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 155.84019999999964,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.03,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 156.8714,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.03,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 157.32840000000033,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.03,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 153.01590000000033,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.03,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 152.71600000000035,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.02,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 114.45280000000002,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.03,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 110.17079999999987,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.03,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 143.91519999999946,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.03,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 111.09310000000005,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.03,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 155.64930000000004,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.03,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 111.89699999999993,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.03,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 160.7478000000001,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.03,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 120.89800000000014,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.02,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 111.26829999999973,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.02,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 159.27340000000004,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.03,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 103.2481000000007,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.03,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 109.59739999999965,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.02,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 115.77430000000004,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.03,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 153.71349999999984,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.02,
+          "firstInvocation": "false"
+        },
+        {
+          "httpMs": 155.69840000000022,
+          "status": 200,
+          "valid": true,
+          "handlerMs": 0.03,
+          "firstInvocation": "false"
+        }
+      ]
+    }
+  ]
+}

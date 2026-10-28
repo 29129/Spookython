@@ -1,6 +1,6 @@
 # User-authorized temporary paid diagnostic; cleanup runs even if the test fails.
 [CmdletBinding()]
-param([string]$Profile = 'cdk-developer')
+param([string]$Profile = 'cdk-developer', [switch]$CompareEdge)
 $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $false
 $projectDirectory = Split-Path -Parent $PSScriptRoot
@@ -45,7 +45,11 @@ try {
             & npx.cmd cdk deploy SpookythonStack --profile $Profile --require-approval never
             if ($LASTEXITCODE -ne 0) { throw "Fallo la activacion en etapa $stage. Se intentara retirar toda la capacidad." }
         }
-        & node scripts/run-http-fire-drill.mjs --round=3 --fast --max-turns=12 --http2 --http2-connections=2
+        if ($CompareEdge) {
+            & node scripts/compare-api-latency.mjs
+        } else {
+            & node scripts/run-http-fire-drill.mjs --round=3 --fast --max-turns=12 --http2 --http2-connections=2
+        }
         $diagnosticExitCode = $LASTEXITCODE
         # Exit 1 can mean a deliberately incomplete 12-turn round. Always preserve its evidence.
         $reportSource = Join-Path $projectDirectory 'reports/http/fire-drill-base-turns-12-http2-2connections-latest.json'

@@ -5,7 +5,9 @@ import { avatarSprite, hydrateAvatarLegends } from './map-avatars.mjs'
 
 hydrateAvatarLegends()
 
-const API_BASE_URL = 'https://gkzb014d54.execute-api.us-east-1.amazonaws.com'
+// Keep the proven direct route until authenticated A-B-B-A confirms an edge gain.
+const API_BASE_URL = location.hostname === 'd2qqi0nkfeyck5.cloudfront.net' && new URLSearchParams(location.search).get('api') === 'edge'
+  ? `${location.origin}/api` : 'https://gkzb014d54.execute-api.us-east-1.amazonaws.com'
 const REFRESH_INTERVAL_MS = 2000
 const SVG_NS = 'http://www.w3.org/2000/svg'
 

@@ -95,6 +95,20 @@ export class SpookythonStack extends cdk.Stack {
         compress: true,
       },
       comment: 'Spookython mapa público',
+      errorResponses: [500, 502, 503, 504].map((httpStatus) => ({ httpStatus, ttl: cdk.Duration.seconds(0) })),
+    })
+    const stripApiPrefix = new cloudfront.Function(this, 'ApiPathRewrite', {
+      code: cloudfront.FunctionCode.fromInline("function handler(event) { var request = event.request; request.uri = request.uri.substring(4) || '/'; return request; }"),
+    })
+    webDistribution.addBehavior('/api/*', new origins.HttpOrigin(cdk.Fn.select(2, cdk.Fn.split('/', api.apiEndpoint)), {
+      protocolPolicy: cloudfront.OriginProtocolPolicy.HTTPS_ONLY,
+      keepaliveTimeout: cdk.Duration.seconds(60),
+    }), {
+      viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.HTTPS_ONLY,
+      allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
+      cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
+      originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
+      functionAssociations: [{ function: stripApiPrefix, eventType: cloudfront.FunctionEventType.VIEWER_REQUEST }],
     })
     new s3deploy.BucketDeployment(this, 'DeployWebAssets', {
       sources: [s3deploy.Source.asset(path.join(__dirname, '../../web'))],
@@ -107,6 +121,7 @@ export class SpookythonStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'ApiBaseUrl', { value: api.apiEndpoint })
     new cdk.CfnOutput(this, 'WorldStateTableName', { value: worldStateTable.tableName })
     new cdk.CfnOutput(this, 'WebUrl', { value: `https://${webDistribution.distributionDomainName}` })
+    new cdk.CfnOutput(this, 'AcceleratedApiUrl', { value: `https://${webDistribution.distributionDomainName}/api` })
 
     const budgetEmail = process.env.BUDGET_ALERT_EMAIL
     const monthlyBudgetUsd = process.env.MONTHLY_BUDGET_USD

@@ -1,0 +1,35 @@
+{
+  "verifiedAt": "2026-10-28T14:42:46.5104287Z",
+  "deploymentLabel": "refugio-compact-edge-20261028",
+  "deploymentSucceeded": true,
+  "defaultTransport": "direct",
+  "edgeOptIn": "?api=edge",
+  "webOptInVerified": true,
+  "provisionedConcurrencyInDeployedTemplate": 0,
+  "checks": [
+    {
+      "endpoint": "https://gkzb014d54.execute-api.us-east-1.amazonaws.com",
+      "health": "ok",
+      "nodes": 600,
+      "streets": 868,
+      "invalidKeyStatus": 401,
+      "cacheControl": [
+        "no-store"
+      ]
+    },
+    {
+      "endpoint": "https://d2qqi0nkfeyck5.cloudfront.net/api",
+      "health": "ok",
+      "nodes": 600,
+      "streets": 868,
+      "invalidKeyStatus": 401,
+      "cacheControl": [
+        "no-store"
+      ]
+    }
+  ],
+  "testsPassed": 39,
+  "authenticated200PersonLatency": "PENDING_USER_TERMINAL",
+  "regionalComparison": "PENDING",
+  "note": "GET health and unauthorized POST verification do not certify 150 ms."
+}

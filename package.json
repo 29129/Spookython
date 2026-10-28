@@ -7,6 +7,8 @@
     "build": "tsc --noEmit",
     "test": "node --test test/*.test.cjs test/*.test.mjs",
     "fire-drill:http": "node scripts/run-http-fire-drill.mjs",
+    "latency:compare": "node scripts/compare-api-latency.mjs",
+    "latency:network": "node scripts/probe-api-network.mjs",
     "web:serve": "node scripts/serve-web.mjs",
     "preview:local": "node scripts/preview-local.mjs",
     "fire-drill": "node scripts/run-fire-drill.mjs",
