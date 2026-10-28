@@ -34,6 +34,17 @@ Este comando tiene cargos: prepara gradualmente hasta 200 entornos de 1 GB, ejec
 
 ## Comparacion regional
 
+Flujo recomendado para evitar perder la ventana preparada: antes de activar capacidad, ejecutar en CloudShell:
+
+```bash
+cd ~/Refugio593-latencia
+git pull --ff-only
+export SIMULATOR_API_KEY
+node ~/Refugio593-latencia/scripts/wait-regional-prepared.mjs
+```
+
+Requiere la clave ya cargada y el permiso de lectura lambda:GetProvisionedConcurrencyConfig. Comprueba la clave con un POST invalido que no modifica el mundo. Solo cuando aparezca WAITING_FOR_PREPARED_200 se activa la ventana desde el equipo que despliega. El script de CloudShell espera hasta 60 minutos, exige estado READY y 200 entornos solicitados, asignados y disponibles, verifica el alias por HTTP y ejecuta automaticamente el ensayo directo de 12 turnos. No activa recursos ni oculta primeras peticiones. Resuelve las rutas desde su propio archivo, independientemente de la carpeta actual. Guarda un reporte con fecha nueva, lugar declarado y verificacion de los entornos observados. Un ensayo parcial no certifica las tres rondas completas ni rendimiento desde Ecuador.
+
 Para abrir desde PowerShell una ventana regional con capacidad preparada y sin copiar la clave al equipo que despliega:
 
 ```powershell
