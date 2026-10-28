@@ -1,12 +1,14 @@
 param(
     [ValidateSet('Diff', 'Deploy')][string]$Action = 'Diff',
-    [string]$Profile = 'cdk-developer'
+    [string]$Profile = 'cdk-developer',
+    [switch]$ManagedTrial
 )
 $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $false
 $projectDirectory = Split-Path $PSScriptRoot -Parent
 Push-Location $projectDirectory
 try {
+    if ($ManagedTrial) { $env:SPOOKYTHON_MANAGED_TRIAL = '1' }
     if (-not $env:SIMULATOR_API_KEY) {
         # The owner explicitly published this simulator-only demo key for evaluation.
         $readmeText = [IO.File]::ReadAllText((Join-Path $projectDirectory 'README.md'))
@@ -38,6 +40,10 @@ try {
     if ($Action -eq 'Diff') {
         & npx.cmd cdk diff SpookythonStack --profile $Profile
         if ($LASTEXITCODE -ne 0) { throw 'No se pudo completar cdk diff. No se ha desplegado.' }
+        if ($ManagedTrial) {
+            & npx.cmd cdk diff Refugio593LatencyTrial --profile $Profile
+            if ($LASTEXITCODE -ne 0) { throw 'Fallo el diff del ejecutor gestionado.' }
+        }
         return
     }
     & npx.cmd cdk synth SpookythonStack --profile $Profile --no-lookups --quiet
@@ -46,8 +52,16 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Paquete Lambda invalido; no se despliega.' }
     & node scripts/validate-api-edge.mjs
     if ($LASTEXITCODE -ne 0) { throw 'Configuracion CloudFront invalida; no se despliega.' }
+    if ($ManagedTrial) {
+        & node scripts/validate-managed-trial.mjs
+        if ($LASTEXITCODE -ne 0) { throw 'Ejecutor gestionado invalido; no se despliega.' }
+    }
     & npx.cmd cdk deploy SpookythonStack --profile $Profile --require-approval never
     if ($LASTEXITCODE -ne 0) { throw 'Fallo el despliegue. Revisar los eventos del stack antes de reintentar.' }
+    if ($ManagedTrial) {
+        & npx.cmd cdk deploy Refugio593LatencyTrial --profile $Profile --require-approval never
+        if ($LASTEXITCODE -ne 0) { throw 'Fallo el despliegue del ejecutor gestionado. No se ha iniciado la prueba.' }
+    }
     $base = 'https://gkzb014d54.execute-api.us-east-1.amazonaws.com'
     $headers = @{ 'x-api-key' = $env:SIMULATOR_API_KEY }
     $map = Invoke-RestMethod -Uri "$base/map"

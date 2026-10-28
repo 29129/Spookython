@@ -1,5 +1,7 @@
 # Estimación de costos
 
+La ultima prueba gestionada agrega cargos temporales de CodeBuild, Lambda preparada, Scheduler y logs cifrados con KMS, ademas de almacenamiento S3. Estos cargos no estan incluidos en el modelo ilustrativo siguiente. La implementacion actual lee decisiones en 16 registros pequenos y usa escrituras transaccionales; el supuesto anterior de leer 100 KiB por cada /paso describe el modelo previo. El gasto real del evento sigue requiriendo conciliacion con la facturacion de AWS.
+
 ## Alcance y supuestos
 
 Estimación de planificación para `us-east-1`, una demo pequeña, una sola Lambda ARM64 de 1024 MB y DynamoDB bajo demanda. No equivale a una cotización ni a un límite de gasto. Las tarifas pueden variar por región, fecha, impuestos, créditos y elegibilidad de la cuenta. Revisar AWS Pricing Calculator y facturación real antes y después del evento.

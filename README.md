@@ -173,4 +173,6 @@ La demo comparte un mundo, no implementa cuentas ni partidas privadas. El mapa y
 
 ## Optimizacion de latencia
 
+La [ultima prueba gestionada en AWS](docs/prueba-final-gestionada.md) ejecuta referencia y capacidad preparada desde CodeBuild, guarda la evidencia y retira la capacidad con respaldo programado. El alias estable de la API no reserva entornos cuando esta inactivo. El resultado se declara con su ubicacion y alcance reales; el objetivo de 150 ms no se da por cumplido antes de medirlo.
+
 API disponible por CloudFront, sin cache de decisiones; el endpoint directo sigue siendo el predeterminado hasta demostrar una mejora en la comparacion autenticada. Consulta [objetivo de 150 ms, pruebas A-B-B-A y comparacion regional](docs/latencia-150ms.md). Esta implementacion no certifica el umbral hasta ejecutar el ensayo autenticado con 200 personas desde el equipo evaluado.

@@ -54,10 +54,10 @@ export class SpookythonStack extends cdk.Stack {
     // Opt-in only: pre-initialized environments have an ongoing capacity charge.
     const provisionedCount = Number(process.env.SPOOKYTHON_PROVISIONED_CONCURRENCY || 0)
     if (![0, 50, 100, 150, 200].includes(provisionedCount)) throw new Error('SPOOKYTHON_PROVISIONED_CONCURRENCY debe ser 0, 50, 100, 150 o 200; los valores positivos tienen costo continuo.')
-    const apiTarget = provisionedCount > 0 ? new lambda.Alias(this, 'PreparedApiAlias', {
+    const apiTarget = new lambda.Alias(this, 'PreparedApiAlias', {
       aliasName: 'prepared', version: apiHandler.currentVersion,
-      provisionedConcurrentExecutions: provisionedCount,
-    }) : apiHandler
+      ...(provisionedCount > 0 ? { provisionedConcurrentExecutions: provisionedCount } : {}),
+    })
 
     const api = new apigwv2.HttpApi(this, 'SpookythonHttpApi', {
       apiName: 'spookython-api',
@@ -97,6 +97,21 @@ export class SpookythonStack extends cdk.Stack {
       comment: 'Spookython mapa público',
       errorResponses: [500, 502, 503, 504].map((httpStatus) => ({ httpStatus, ttl: cdk.Duration.seconds(0) })),
     })
+    const trialResults = new s3.Bucket(this, 'TrialResults', {
+      bucketName: `refugio593-trial-${this.account}-${this.region}`,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      encryption: s3.BucketEncryption.S3_MANAGED, enforceSSL: true,
+      lifecycleRules: [{ prefix: 'runs/', expiration: cdk.Duration.days(7) }],
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+    })
+    const summaryPath = new cloudfront.Function(this, 'TrialSummaryPath', {
+      code: cloudfront.FunctionCode.fromInline("function handler(event) { event.request.uri = '/latest/summary.json'; return event.request; }"),
+    })
+    webDistribution.addBehavior('/evidence/summary.json', origins.S3BucketOrigin.withOriginAccessControl(trialResults), {
+      viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.HTTPS_ONLY,
+      cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
+      functionAssociations: [{ function: summaryPath, eventType: cloudfront.FunctionEventType.VIEWER_REQUEST }],
+    })
     const stripApiPrefix = new cloudfront.Function(this, 'ApiPathRewrite', {
       code: cloudfront.FunctionCode.fromInline("function handler(event) { var request = event.request; request.uri = request.uri.substring(4) || '/'; return request; }"),
     })
@@ -122,6 +137,7 @@ export class SpookythonStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'WorldStateTableName', { value: worldStateTable.tableName })
     new cdk.CfnOutput(this, 'WebUrl', { value: `https://${webDistribution.distributionDomainName}` })
     new cdk.CfnOutput(this, 'AcceleratedApiUrl', { value: `https://${webDistribution.distributionDomainName}/api` })
+    new cdk.CfnOutput(this, 'TrialSummaryUrl', { value: `https://${webDistribution.distributionDomainName}/evidence/summary.json` })
 
     const budgetEmail = process.env.BUDGET_ALERT_EMAIL
     const monthlyBudgetUsd = process.env.MONTHLY_BUDGET_USD

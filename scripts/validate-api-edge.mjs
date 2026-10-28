@@ -15,7 +15,7 @@ const origin = distribution.Origins.find((item) => item.Id === behavior.TargetOr
 assert.equal(origin.CustomOriginConfig.OriginProtocolPolicy, 'https-only')
 assert.equal(origin.CustomOriginConfig.OriginKeepaliveTimeout, 60)
 for (const status of [500, 502, 503, 504]) assert.equal(distribution.CustomErrorResponses.find((item) => item.ErrorCode === status).ErrorCachingMinTTL, 0)
-const rewrite = resources.find((resource) => resource.Type === 'AWS::CloudFront::Function')
+const rewrite = resources.find((resource) => resource.Type === 'AWS::CloudFront::Function' && resource.Properties.FunctionCode.includes('substring(4)'))
 for (const uri of ['/api/paso', '/api/estado/avanzar', '/api/simulacion/reiniciar', '/api/health']) {
   const request = { uri, method: 'POST', headers: { 'x-api-key': { value: 'test-only' } }, querystring: { test: { value: '1' } } }
   const context = { event: { request } }
@@ -24,5 +24,11 @@ for (const uri of ['/api/paso', '/api/estado/avanzar', '/api/simulacion/reinicia
   assert.equal(result.headers['x-api-key'].value, 'test-only')
   assert.equal(result.querystring.test.value, '1')
 }
-assert(!resources.some((resource) => resource.Type === 'AWS::Lambda::Alias'))
+const aliases = resources.filter((resource) => resource.Type === 'AWS::Lambda::Alias')
+assert.equal(aliases.length, 1)
+assert.equal(aliases[0].Properties.ProvisionedConcurrencyConfig, undefined)
+const summaryBehavior = distribution.CacheBehaviors.find((item) => item.PathPattern === '/evidence/summary.json')
+assert.equal(summaryBehavior.CachePolicyId, CachePolicy.CACHING_DISABLED.cachePolicyId)
+const summaryRewrite = resources.find((resource) => resource.Type === 'AWS::CloudFront::Function' && resource.Properties.FunctionCode.includes('/latest/summary.json'))
+assert(summaryRewrite)
 console.log('API edge: HTTPS, sin cache, POST y x-api-key reenviados, prefijo correcto, capacidad pagada = 0.')

@@ -1,0 +1,15 @@
+{
+  "verifiedAt": "2026-10-28T21:43:28.2803019Z",
+  "apiDeploymentSucceeded": true,
+  "managedStackDeploymentSucceeded": true,
+  "projectName": "refugio593-latency-final",
+  "testsPassed": 46,
+  "mockedRunnerSuccessAndFailure": "PASSED",
+  "sourceAndIamValidation": "PASSED",
+  "apiAlias": "prepared",
+  "apiInitialization": "on-demand",
+  "activeProvisionedCapacity": 0,
+  "measurement": "PENDING_OWNER_KEY_AND_START",
+  "publicSummary": "https://d2qqi0nkfeyck5.cloudfront.net/evidence/summary.json",
+  "note": "No simulated timing is reported as an AWS measurement."
+}
