@@ -1,12 +1,13 @@
 {
   "source": "Servidor HTTP/1 local de un solo proceso y DynamoDB simulado; no es una medición de AWS.",
-  "generatedAt": "2026-10-28T01:53:11.654Z",
-  "requests": 200,
-  "p95HttpMs": 518.4769999999999,
-  "timeouts": 26,
+  "generatedAt": "2026-10-28T02:17:46.831Z",
+  "baselineSurvivors": 200,
+  "requests": 196,
+  "p95HttpMs": 261.3642,
+  "timeouts": 0,
   "errors": 0,
-  "allResponsesUnder500Ms": false,
-  "turnDurationMs": 845.2327,
+  "allResponsesUnder500Ms": true,
+  "turnDurationMs": 403.2495,
   "fallbackAndCapacityChecks": "PASSED",
   "cloudConcurrentValidation": "PENDING"
 }

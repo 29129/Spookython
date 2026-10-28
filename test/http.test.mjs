@@ -56,13 +56,24 @@ test('un endpoint /paso que tarda más de 500 ms no mueve a nadie', async () => 
   } finally { await api.close() }
 })
 
-test('200 solicitudes HTTP conservan cupos y aplican la espera ante timeout', async () => {
+test('la ronda de 200 consulta a los activos después de mordidas y conserva cupos y fallback', async () => {
   const api = await localApi()
   try {
     const initial = await api.store.resetStoredWorldState(map, { round: 3, pro: true })
-    const result = await advanceHttpTurn({ baseUrl: api.baseUrl, apiKey: key, currentState: initial })
-    assert.equal(api.requests.filter((path) => path === '/paso').length, 200)
-    assert.equal(result.decisions.length, 200)
+    let preparedActiveIds
+    const fetchImpl = async (url, options) => {
+      const response = await fetch(url, options)
+      if (JSON.parse(options.body).phase === 'PREPARE') {
+        const prepared = await response.clone().json()
+        preparedActiveIds = prepared.survivors.filter((survivor) => survivor.status === 'ACTIVE').map((survivor) => survivor.id)
+      }
+      return response
+    }
+    const result = await advanceHttpTurn({ baseUrl: api.baseUrl, apiKey: key, currentState: initial, fetchImpl })
+    assert.equal(initial.survivors.length, 200)
+    assert(preparedActiveIds.length > 0)
+    assert.equal(api.requests.filter((path) => path === '/paso').length, preparedActiveIds.length)
+    assert.deepEqual(result.decisions.map((decision) => decision.survivorId).sort(), preparedActiveIds.sort())
     assert.equal(result.state.lastTurnMetrics.invalidMoves, 0)
     assert(result.state.refuges.every((refuge) => refuge.occupied + refuge.reserved <= refuge.capacity))
     const timedOutIds = new Set(result.decisions.filter((decision) => decision.timedOut).map((decision) => decision.survivorId))
@@ -73,7 +84,7 @@ test('200 solicitudes HTTP conservan cupos y aplican la espera ante timeout', as
     await mkdir(new URL('../reports/audit/', import.meta.url), { recursive: true })
     await writeFile(new URL('../reports/audit/http-local-200-latest.json', import.meta.url), JSON.stringify({
       source: 'Servidor HTTP/1 local de un solo proceso y DynamoDB simulado; no es una medición de AWS.',
-      generatedAt: new Date().toISOString(), requests: 200, p95HttpMs: ordered[Math.ceil(ordered.length * .95) - 1],
+      generatedAt: new Date().toISOString(), baselineSurvivors: 200, requests: result.decisions.length, p95HttpMs: ordered[Math.ceil(ordered.length * .95) - 1],
       timeouts: timedOutIds.size, errors: result.state.lastTurnMetrics.errors,
       allResponsesUnder500Ms: timedOutIds.size === 0, turnDurationMs: result.durationMs,
       fallbackAndCapacityChecks: 'PASSED', cloudConcurrentValidation: 'PENDING',

@@ -120,7 +120,7 @@ function drawStreets(project, blockedStreetIds) {
     if (blocked.has(street.id)) {
       const center = project(street.geometry[Math.floor(street.geometry.length / 2)])
       const marker = svgElement('g', { transform: `translate(${center.x} ${center.y})` })
-      marker.append(avatarSprite('blocked', 25, { centered: true }))
+      marker.append(avatarSprite('blocked', 18, { centered: true }))
       const title = svgElement('title')
       title.textContent = `${street.name || street.type} cerrada: arista retirada de la red transitable`
       marker.append(title)
@@ -179,7 +179,7 @@ function drawRefuges(project, state) {
     const point = project([refuge.lng, refuge.lat])
     const marker = svgElement('g', { transform: `translate(${point.x} ${point.y})` })
     marker.append(svgElement('circle', { class: 'refuge-ring', r: 11 }))
-    marker.append(avatarSprite('refuge', 38))
+    marker.append(avatarSprite('refuge', 28))
     const label = svgElement('text', { class: 'refuge-label', x: 0, y: 17 })
     label.textContent = `R${index + 1}`
     marker.append(label)
@@ -202,7 +202,7 @@ function drawEntities(project, state) {
     const statusClass = survivor.status === 'BITTEN' ? 'survivor-bitten' : survivor.status === 'RESCUED' ? 'survivor-rescued' : 'survivor-mark'
     if (survivor.status === 'ACTIVE') marker.append(svgElement('circle', { class: 'entity-halo', r: 7.5 }))
     marker.append(svgElement('circle', { class: statusClass, r: survivor.status === 'ACTIVE' ? 3.3 : 3.8 }))
-    if (survivor.status === 'ACTIVE') marker.append(avatarSprite('survivor', 25))
+    if (survivor.status === 'ACTIVE') marker.append(avatarSprite('survivor', 18))
     const title = svgElement('title')
     title.textContent = `${survivor.id} · ${survivor.status}`
     marker.append(title)
@@ -214,7 +214,7 @@ function drawEntities(project, state) {
     if (!node) continue
     const point = project([node.lng, node.lat])
     const marker = svgElement('g', { transform: `translate(${point.x} ${point.y})` })
-    marker.append(avatarSprite('truck', 35))
+    marker.append(avatarSprite('truck', 26))
     const label = svgElement('text', { x: 0, y: 15, class: 'vehicle-passengers' })
     label.textContent = `${vehicle.passengerIds.length}/4`
     marker.append(label)
@@ -253,7 +253,7 @@ function drawEntities(project, state) {
     const point = project([node.lng, node.lat])
     const marker = svgElement('g', { transform: `translate(${point.x} ${point.y})` })
     if (zombie.type === 'HORDE') marker.append(svgElement('circle', { cx: 0, cy: 0, r: 16, fill: 'rgba(189,118,255,.08)', stroke: 'rgba(189,118,255,.38)', 'stroke-width': 1 }))
-    marker.append(avatarSprite(zombieAvatars[zombie.type], zombie.type === 'HORDE' ? 38 : 30))
+    marker.append(avatarSprite(zombieAvatars[zombie.type], zombie.type === 'HORDE' ? 28 : 22))
     const title = svgElement('title')
     title.textContent = `${zombie.id} · ${zombie.type}${zombie.type === 'HORDE' ? ' · avanza una calle cada 5 turnos' : ''}`
     marker.append(title)

@@ -129,6 +129,18 @@ function prepareWorld(current, map, requestedEvent) {
   wakeSleepers(state, adjacency)
   state.zombieMovements = []
   for (const zombie of state.zombies) moveZombie(zombie, state.survivors, adjacency, state.turn, state.zombieMovements)
+  // Custom rule: runners can bite on either substep, before survivors move.
+  // Keep it in PREPARE so a bitten person cannot escape through a later HTTP decision.
+  const runners = new Set(state.zombies.filter((zombie) => zombie.type === 'RUNNER').map((zombie) => zombie.id))
+  const crossedRunnerNodes = new Set(state.zombieMovements
+    .filter((movement) => runners.has(movement.zombieId)).map((movement) => movement.toNodeId))
+  for (const survivor of state.survivors) {
+    if (survivor.status === 'ACTIVE' && crossedRunnerNodes.has(survivor.nodeId)) {
+      survivor.status = 'BITTEN'
+      survivor.routeNodeIds = [survivor.nodeId]
+      delete state.reservations?.[survivor.id]
+    }
+  }
   delete state.predictionTurn
   state.runnerPredictions = predictRunners(map, state)
   state.predictionTurn = state.turn + 1

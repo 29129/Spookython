@@ -2,7 +2,7 @@
 
 Atlas PNG RGBA de 1536 × 1024 con ocho diseños aprobados por el usuario. Generado mediante la herramienta integrada de imágenes, en modo edición de la propuesta pixel art. El archivo PNG contiene transparencia real. Los rectángulos de cada sprite están definidos en `web/map-avatars.mjs`: el SVG recorta el atlas al visualizarlo, conservando las proporciones. El archivo de imagen no se modifica mediante código.
 
-Personas activas: 25 px; caminantes/corredores: 30 px; hordas y refugios: 38 px; camionetas: 35 px; cierres: 25 px. Los rescatados y mordidos conservan indicadores pequeños. Las personas a bordo no se dibujan también como peatones. El dormido solo aparece en la galería: permanece invisible en el mundo y, al despertar, se convierte en caminante según las reglas del motor.
+Personas activas: 18 px; caminantes/corredores: 22 px; hordas y refugios: 28 px; camionetas: 26 px; cierres: 18 px. Tamaños reducidos por petición del usuario para evitar solapamientos. La galería conserva sus tamaños de comparación. Los rescatados y mordidos conservan indicadores pequeños. Las personas a bordo no se dibujan también como peatones. El dormido solo aparece en la galería: permanece invisible en el mundo y, al despertar, se convierte en caminante según las reglas del motor.
 
 El atlas se comparte entre todos los marcadores para reutilizar la descarga. Ver `/avatars.html` para revisar los ocho diseños en 32 y 64 píxeles. Las posiciones de los marcadores siguen siendo las del estado del simulador; esta integración no cambia las decisiones de ruta.
 

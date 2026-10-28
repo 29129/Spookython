@@ -141,6 +141,30 @@ test('compartir nodo y cruzar en sentido opuesto producen mordida', () => {
   assert.equal(resolveWorld(prepared, fixture, []).survivors[0].status, 'BITTEN')
 })
 
+test('un corredor muerde al pasar por el nodo antes del movimiento humano, incluso si después sale', () => {
+  const fixture = graph(['A', 'B', 'C', 'F'], [['A', 'B'], ['B', 'C'], ['C', 'F']])
+  const current = state([{ id: 'R', type: 'RUNNER', nodeId: 'A' }], [
+    { id: 'S1', nodeId: 'B', status: 'ACTIVE', routeNodeIds: ['B', 'C', 'F'] },
+    { id: 'S2', nodeId: 'B', status: 'ACTIVE', routeNodeIds: ['B', 'C', 'F'] },
+    { id: 'Safe', nodeId: 'F', status: 'ACTIVE', routeNodeIds: ['F'] },
+    { id: 'Passenger', nodeId: 'B', status: 'ONBOARD', routeNodeIds: [] },
+  ])
+  current.reservations = { S1: 'F0', S2: 'F0' }
+  const prepared = prepareWorld(current, fixture, { type: 'NONE' })
+  assert.equal(prepared.zombieMovements[0].toNodeId, 'B')
+  assert.notEqual(prepared.zombies[0].nodeId, 'B')
+  for (const id of ['S1', 'S2']) {
+    assert.equal(prepared.survivors.find((survivor) => survivor.id === id).status, 'BITTEN')
+    assert.equal(prepared.reservations[id], undefined)
+  }
+  assert.equal(prepared.survivors.find((survivor) => survivor.id === 'Safe').status, 'ACTIVE')
+  assert.equal(prepared.survivors.find((survivor) => survivor.id === 'Passenger').status, 'ONBOARD')
+  const resolved = resolveWorld(prepared, fixture, [{ survivorId: 'S1', siguienteNodo: 'C', durationMs: 1 }])
+  assert.equal(resolved.survivors.find((survivor) => survivor.id === 'S1').nodeId, 'B')
+  assert.equal(resolved.survivors.find((survivor) => survivor.id === 'S1').status, 'BITTEN')
+  assert.equal(current.survivors[0].status, 'ACTIVE')
+})
+
 test('reservas de refugios reparten cupos y no sobreasignan aunque uno esté lleno', () => {
   const fixture = graph(['A', 'F', 'G'], [['A', 'F'], ['A', 'G', 2]], ['F', 'G'])
   const current = state([], Array.from({ length: 4 }, (_, index) => ({ id: `S${index}`, nodeId: 'A', status: 'ACTIVE' })))

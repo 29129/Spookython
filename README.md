@@ -71,6 +71,8 @@ Las reservas pueden obligar a caminar más y Pro no garantiza mejorar todas las 
 
 ## Prueba de fuego HTTP real
 
+**Regla personalizada solicitada el 27/10/2026:** un corredor también muerde al atravesar un nodo ocupado por una persona activa en cualquiera de sus dos pasos. Se resuelve durante PREPARE, antes del movimiento humano, y no afecta a personas ya rescatadas ni a pasajeros a bordo. Esta regla amplía la especificación original del reto, que exige mordida por coincidencia al final del turno o cruce opuesto; no se presenta como una reproducción exacta de esa regla. Los reportes anteriores al cambio no son comparables directamente con las rondas nuevas.
+
 Después de desplegar, con las variables de la API y la clave en tu terminal:
 
 ```powershell
@@ -88,7 +90,7 @@ El script serial `scripts/check-public-api.ps1` sirve para una comprobación peq
 
 ### Alternativa temporal con cuota de 10
 
-El 27/10/2026 se confirmó una cuota regional de 10 ejecuciones Lambda, compartida con otras aplicaciones. El panel mostró errores 503 y CloudWatch registró limitaciones al alcanzar 10 ejecuciones. El aumento a 1.000 está solicitado, con caso abierto; no se da por aprobado.
+El 27/10/2026 se confirmó una cuota regional de 10 ejecuciones Lambda, compartida con otras aplicaciones. El panel mostró errores 503 y CloudWatch registró limitaciones al alcanzar 10 ejecuciones. El usuario confirmó la aprobación del aumento a 1.000. Falta verificar la cuota aplicada con `get-account-settings` y repetir las pruebas con carga completa; los reportes limitados conservan su carácter histórico.
 
 El panel permite seleccionar **Hasta 8** antes de iniciar. Desde la terminal, sin desplegar los cambios del panel:
 
