@@ -15,6 +15,12 @@ function runNode(args, env = process.env) {
 }
 for (const asset of Object.values(manifest.files || {})) {
   if (asset.source.packaging !== 'zip' || !asset.source.path) continue
+  const diagnostic = path.resolve(directory, asset.source.path, 'index.js')
+  if (fs.existsSync(diagnostic) && fs.readFileSync(diagnostic, 'utf8').includes('diagnostic_start_error')) {
+    runNode(['--check', diagnostic])
+    runNode(['-e', `const api=require(${JSON.stringify(diagnostic)});api.handler({requestContext:{http:{method:'GET'}}}).then(r=>{if(r.statusCode!==404)process.exit(1)})`])
+    console.log('Diagnostic starter: exact CJS artifact syntax and import verified.')
+  }
   const entry = path.resolve(directory, asset.source.path, 'index.mjs')
   if (!fs.existsSync(entry)) continue
   runNode(['--check', entry])

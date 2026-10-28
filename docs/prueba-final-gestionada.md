@@ -6,17 +6,15 @@ La API usa un alias estable `prepared` sobre una version publicada. El alias no 
 
 ## Iniciar una sola ejecucion
 
-Desde CloudShell en us-east-1:
+Desde PowerShell local, dentro del repositorio:
 
-```bash
-cd ~/Refugio593-latencia
-git pull --ff-only
-bash ~/Refugio593-latencia/scripts/start-managed-trial.sh
+```powershell
+./scripts/start-final-local.ps1
 ```
 
-Si falta la clave, el script la solicita sin mostrarla. Valida la clave antes de iniciar, la carga en un secreto dedicado de Secrets Manager mediante un archivo temporal privado y borra el archivo. No se introduce la clave en argumentos de procesos, plantillas, buildspec ni variables de texto plano de CodeBuild. El trabajo obtiene la clave por referencia de Secrets Manager y la elimina al terminar. La clave/hash de la API no se cambia.
+El script solicita la clave sin mostrarla y la envia por HTTPS a una funcion separada, autenticada con el hash vigente. Esta carga un secreto dedicado de Secrets Manager e inicia CodeBuild. No se guarda la clave en archivos, argumentos de procesos, plantillas, buildspec ni variables de texto plano de CodeBuild. El trabajo obtiene la clave por referencia de Secrets Manager y la elimina al terminar. La clave/hash de la API no se cambia.
 
-Al aparecer un id de build, la ejecucion ya corre en AWS y no depende de la sesion de CloudShell. No iniciar otro controlador ni desplegar cambios de la API mientras corre. El proyecto admite un solo build simultaneo.
+Al aparecer un id de build, la ejecucion ya corre en AWS y puedes cerrar la ventana local. No requiere CloudShell ni credenciales AWS en tu terminal. Una escritura condicional en una particion de diagnostico permite iniciar una sola prueba; repetir el pedido devuelve 409. No iniciar otro controlador ni desplegar cambios de la API mientras corre. El proyecto admite un solo build simultaneo. El recibo local sin clave queda en `tmp/managed-trial-local-start.json`.
 
 ## Protocolo y limites
 

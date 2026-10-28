@@ -8,6 +8,7 @@ import * as dynamodb from 'aws-cdk-lib/aws-dynamodb'
 import * as lambda from 'aws-cdk-lib/aws-lambda'
 import * as nodejs from 'aws-cdk-lib/aws-lambda-nodejs'
 import * as logs from 'aws-cdk-lib/aws-logs'
+import * as iam from 'aws-cdk-lib/aws-iam'
 import * as s3 from 'aws-cdk-lib/aws-s3'
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment'
 import { Construct } from 'constructs'
@@ -77,6 +78,23 @@ export class SpookythonStack extends cdk.Stack {
     api.addRoutes({ path: '/estado/avanzar', methods: [apigwv2.HttpMethod.POST], integration })
     api.addRoutes({ path: '/paso', methods: [apigwv2.HttpMethod.POST], integration })
     api.addRoutes({ path: '/simulacion/reiniciar', methods: [apigwv2.HttpMethod.POST], integration })
+    const diagnosticHandler = new nodejs.NodejsFunction(this, 'DiagnosticStarter', {
+      functionName: 'refugio593-diagnostic-starter', runtime: lambda.Runtime.NODEJS_22_X,
+      architecture: lambda.Architecture.ARM_64, memorySize: 512, timeout: cdk.Duration.seconds(30),
+      entry: path.join(__dirname, '../../src/diagnostic-handler.js'), bundling: { bundleAwsSDK: true, minify: true },
+      logGroup: new logs.LogGroup(this, 'DiagnosticStarterLogs', { retention: logs.RetentionDays.ONE_WEEK, removalPolicy: cdk.RemovalPolicy.DESTROY }),
+      environment: { WORLD_STATE_TABLE_NAME: worldStateTable.tableName, SIMULATOR_API_KEY_SHA256: process.env.SIMULATOR_API_KEY_SHA256 || '' },
+    })
+    diagnosticHandler.addToRolePolicy(new iam.PolicyStatement({ actions: ['dynamodb:GetItem', 'dynamodb:PutItem'], resources: [worldStateTable.tableArn],
+      conditions: { 'ForAllValues:StringEquals': { 'dynamodb:LeadingKeys': ['refugio593-diagnostics'] }, Null: { 'dynamodb:LeadingKeys': 'false' } } }))
+    diagnosticHandler.addToRolePolicy(new iam.PolicyStatement({ actions: ['secretsmanager:PutSecretValue'], resources: [
+      this.formatArn({ service: 'secretsmanager', resource: 'secret', resourceName: 'refugio593/latency-final-key-??????', arnFormat: cdk.ArnFormat.COLON_RESOURCE_NAME }),
+    ] }))
+    diagnosticHandler.addToRolePolicy(new iam.PolicyStatement({ actions: ['codebuild:StartBuild'], resources: [
+      this.formatArn({ service: 'codebuild', resource: 'project', resourceName: 'refugio593-latency-final' }),
+    ] }))
+    api.addRoutes({ path: '/diagnostico/prueba-final', methods: [apigwv2.HttpMethod.POST],
+      integration: new HttpLambdaIntegration('DiagnosticIntegration', diagnosticHandler) })
 
     const webBucket = new s3.Bucket(this, 'WebAssetsBucket', {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,

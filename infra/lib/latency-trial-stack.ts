@@ -20,7 +20,10 @@ export class LatencyTrialStack extends cdk.Stack {
     const projectName = 'refugio593-latency-final'
     const secretName = 'refugio593/latency-final-key'
     const resultBucket = s3.Bucket.fromBucketName(this, 'Results', `refugio593-trial-${this.account}-${this.region}`)
-    const secret = secretsmanager.Secret.fromSecretNameV2(this, 'ControlKey', secretName)
+    const secret = new secretsmanager.Secret(this, 'ControlKey', { secretName,
+      generateSecretString: { secretStringTemplate: '{"apiKey":""}', generateStringKey: 'nonce' },
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    })
     const logKey = new kms.Key(this, 'LogKey', { enableKeyRotation: true, removalPolicy: cdk.RemovalPolicy.DESTROY,
       pendingWindow: cdk.Duration.days(7) })
     const groupName = '/aws/codebuild/refugio593-latency-final'
