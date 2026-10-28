@@ -57,7 +57,8 @@ function createInitialState(map, worldId = DEFAULT_WORLD_ID, survivorCount = DEF
   const round = options.round || (survivorCount <= 20 ? 1 : survivorCount <= 80 ? 2 : 3)
   if (!ROUND_COUNTS[round]) throw invalid('round debe ser 1, 2 o 3.')
   const state = { schemaVersion: 2, worldId, sessionId: randomUUID(), revision: 0, phase: 'READY', round,
-    pro: options.pro === true, turn: 0, updatedAt: new Date().toISOString(), roundFinished: false,
+    pro: options.pro === true, runnerContactBites: options.runnerContactBites === true,
+    turn: 0, updatedAt: new Date().toISOString(), roundFinished: false,
     zombies: options.zombies || makeInitialZombies(map, round), survivors: [], blockedStreetIds: [], lastEvent: null,
     reservations: {}, vehicles: [], metrics: { requests: 0, errors: 0, timeouts: 0, invalidMoves: 0, slowTurns: 0 } }
   const forbidden = dangerNodes(map, state)
@@ -135,7 +136,7 @@ function prepareWorld(current, map, requestedEvent) {
   const crossedRunnerNodes = new Set(state.zombieMovements
     .filter((movement) => runners.has(movement.zombieId)).map((movement) => movement.toNodeId))
   for (const survivor of state.survivors) {
-    if (survivor.status === 'ACTIVE' && crossedRunnerNodes.has(survivor.nodeId)) {
+    if (state.runnerContactBites === true && survivor.status === 'ACTIVE' && crossedRunnerNodes.has(survivor.nodeId)) {
       survivor.status = 'BITTEN'
       survivor.routeNodeIds = [survivor.nodeId]
       delete state.reservations?.[survivor.id]
@@ -224,7 +225,8 @@ function advanceWorld(current, map, requestedEvent, options = {}) {
 
 function publicState(state, map) {
   return { worldId: state.worldId, sessionId: state.sessionId, revision: state.revision, phase: state.phase || 'READY',
-    turnToken: state.turnToken, round: state.round || 1, pro: state.pro === true, roundFinished: state.roundFinished || false,
+    turnToken: state.turnToken, round: state.round || 1, pro: state.pro === true,
+    runnerContactBites: state.runnerContactBites === true, roundFinished: state.roundFinished || false,
     turn: state.turn, updatedAt: state.updatedAt, zombies: state.zombies.filter((zombie) => !zombie.asleep).map(({ asleep, ...zombie }) => zombie),
     survivors: state.survivors, blockedStreetIds: state.blockedStreetIds, dangerNodeIds: [...dangerNodes(map, state)],
     runnerPredictions: predictRunners(map, state), refuges: state.refuges || map.refuges, vehicles: state.vehicles || [],

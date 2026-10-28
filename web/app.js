@@ -39,6 +39,7 @@ const elements = {
   eventDescription: document.querySelector('#eventDescription'),
   roundSelect: document.querySelector('#roundSelect'),
   proMode: document.querySelector('#proMode'),
+  runnerContactBites: document.querySelector('#runnerContactBites'),
   concurrencySelect: document.querySelector('#concurrencySelect'),
   refugeCapacity: document.querySelector('#refugeCapacity'),
   resetButton: document.querySelector('#resetButton'),
@@ -298,7 +299,7 @@ function render(state) {
   elements.rescuePercent.textContent = `${rescuedPercent}%`
   elements.rescueProgress.value = rescuedPercent
   elements.rescueCaption.textContent = `${state.summary.rescuedSurvivors} de ${total} personas llegaron a un refugio${state.roundFinished ? ' · Ronda finalizada' : ''}.`
-  elements.roundBadge.textContent = `Ronda ${state.round || 1} · ${state.pro ? 'Rescate Pro' : 'Rescate base'}`
+  elements.roundBadge.textContent = `Ronda ${state.round || 1} · ${state.pro ? 'Rescate Pro' : 'Rescate base'} · ${state.runnerContactBites ? 'Mordida al pasar' : 'Reglas del reto'}`
   elements.mapUpdated.textContent = `Actualizado ${new Date(state.updatedAt).toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`
   elements.mapMessage.hidden = true
   elements.nodeCount.textContent = mapData.nodes.length
@@ -353,6 +354,7 @@ function setControlState(running) {
   elements.resetButton.disabled = busy
   elements.roundSelect.disabled = busy
   elements.proMode.disabled = busy
+  elements.runnerContactBites.disabled = busy
   elements.concurrencySelect.disabled = busy
   elements.refugeCapacity.disabled = busy || !elements.proMode.checked
   elements.simulationTitle.textContent = running ? 'Simulación en curso' : 'Modo espectador'
@@ -453,7 +455,8 @@ elements.resetButton.addEventListener('click', async () => {
   try {
     observedSlowTurns = 0
     lastHttpTurnMs = 0
-    const payload = { round: Number(elements.roundSelect.querySelector('input:checked').value), pro: elements.proMode.checked }
+    const payload = { round: Number(elements.roundSelect.querySelector('input:checked').value), pro: elements.proMode.checked,
+      runnerContactBites: elements.runnerContactBites.checked }
     if (payload.pro && elements.refugeCapacity.value !== '') {
       const capacity = Number(elements.refugeCapacity.value)
       if (!Number.isInteger(capacity) || capacity < 0 || capacity > 1000) throw new Error('Indica cupos entre 0 y 1000.')

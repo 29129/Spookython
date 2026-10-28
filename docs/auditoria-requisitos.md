@@ -30,7 +30,7 @@ Actualización del 27/10/2026: el usuario confirmó el despliegue y probó una r
 
 ## Evidencia local
 
-`npm test`: 20 casos funcionales. El test con servidor HTTP local usa un adaptador de DynamoDB en memoria únicamente para verificar contratos, carreras y persistencia de snapshots; Lambda utiliza DynamoDB real. Los timeouts de 200 solicitudes quedan en `reports/audit/http-local-200-latest.json`. Que el fallback funcione no aprueba la meta de rendimiento.
+`npm test`: 21 casos funcionales. El test con servidor HTTP local usa un adaptador de DynamoDB en memoria únicamente para verificar contratos, carreras y persistencia de snapshots; Lambda utiliza DynamoDB real. Los timeouts de 200 solicitudes quedan en `reports/audit/http-local-200-latest.json`. Que el fallback funcione no aprueba la meta de rendimiento.
 
 `npm run fire-drill`: seis rondas aceleradas con reglas corregidas; sin movimientos inválidos ni refugios desbordados. Las cifras del archivo `reports/sprint-5/` son históricas, de una versión que todavía tenía diferencias con el reto, y no deben presentarse como aceptación de esta revisión.
 
@@ -38,20 +38,26 @@ Actualización del 27/10/2026: el usuario confirmó el despliegue y probó una r
 | --- | ---: | ---: | ---: | ---: |
 | Base | 20 | 20 | 0 | 0 |
 | Pro | 20 | 20 | 0 | 0 |
-| Base | 80 | 50 | 30 | 0 |
-| Pro | 80 | 57 | 23 | 0 |
-| Base | 200 | 119 | 81 | 0 |
-| Pro | 200 | 140 | 60 | 0 |
+| Base | 80 | 80 | 0 | 0 |
+| Pro | 80 | 73 | 7 | 0 |
+| Base | 200 | 200 | 0 | 0 |
+| Pro | 200 | 198 | 2 | 0 |
 
 Pro añade restricciones de cupos y puede empeorar una ronda; no se afirma que siempre mejore la supervivencia. Las capacidades predeterminadas y las reglas de vehículos son supuestos declarados porque las capturas no los detallan.
 
-La tabla refleja el último ensayo local con horda central y movimiento cada cinco turnos, más la mordida al pasar de los corredores, solicitados por el usuario el 27/10/2026. La cadencia de horda interpreta «casi inmóvil». La mordida al pasar amplía expresamente la regla original del reto: se aplica en PREPARE antes del movimiento humano y evita el bloqueo de personas entre dos corredores que intercambian posiciones. No afecta a pasajeros a bordo ni a personas rescatadas. Esta variante aumenta la dificultad y no debe presentarse como cumplimiento exacto de la mordida original. Los reportes históricos de AWS y el PDF preparado antes del cambio describen otra versión; no deben atribuirse al motor actual.
+La tabla refleja el último ensayo local con horda central y movimiento cada cinco turnos, con la mordida original del reto. La mordida al pasar se conserva como variante opcional, desactivada por defecto para evaluación. La cadencia de horda interpreta «casi inmóvil». Los reportes históricos de AWS y el PDF preparado antes del cambio describen otra versión; no deben atribuirse al motor actual. Ver `docs/rubrica-jurado.md` para la revisión de puntuación y la interpretación de duración.
 
-La última prueba local de la ronda de 200 registró 196 peticiones (cuatro personas fueron mordidas en PREPARE antes de solicitar ruta), p95 HTTP de aproximadamente 261 ms y cero fuera de plazo. El entorno es un solo proceso local con almacenamiento simulado; no reproduce el escalado de Lambda, pero tampoco permite aprobar la latencia. El archivo conserva la última ejecución y se añadirá la medición real de AWS después del despliegue. Las pruebas funcionales comprueban que quienes exceden el plazo no caminen; no ocultan este fallo de rendimiento.
+La última prueba local de la ronda de 200 registró 200 peticiones con reglas del reto, p95 HTTP de aproximadamente 247 ms y cero fuera de plazo. El entorno es un solo proceso local con almacenamiento simulado; no reproduce el escalado de Lambda, pero tampoco permite aprobar la latencia. El archivo conserva la última ejecución y se añadirá la medición real de AWS después del despliegue. Las pruebas funcionales comprueban que quienes exceden el plazo no caminen; no ocultan este fallo de rendimiento.
 
 El PDF se renderizó y revisó visualmente. La revisión visual del panel actualizado quedó pendiente: el navegador integrado no pudo acceder al servidor local; las pruebas de contratos HTTP sí conectaron al servidor de prueba. Revisar el panel público después del despliegue antes de dar por aprobada su presentación.
 
 ## Aceptación pendiente en AWS y entrega
+
+### Primera prueba completa tras la aprobación de cuota
+
+Reporte histórico preservado en `reports/http/fire-drill-base-full-20261028T023857Z.json`; bandas calculadas por separado en `reports/http/rubric-base-full-20261028T023857Z.json`. Tres rondas de aproximadamente 300 segundos cada una, carga completa, con rescates 20/20, 45/80 y 158/200. Supervivencia ponderada 74,9167 %. p95 HTTP por ronda: 447,27 / 469,33 / 511,86 ms (bandas 4/4/0). Timeouts: 9/190, 21/608 y 193/1750; disponibilidad en bandas 3/3/0. Cero errores HTTP registrados, movimientos inválidos y turnos >2 s. Los únicos códigos observados fueron 200 y 0 (petición sin respuesta HTTP), no 503. Esto no permite concluir por sí solo que no existiera throttling interno.
+
+La ejecución comenzó antes del cambio a mordida original predeterminada; el runner antiguo no registraba la variante, por lo que no se certifica la versión actual ni se atribuye toda la mortalidad a una sola causa. La cuota por sí sola no resolvió la latencia: especialmente en R3, el 11,03 % de las consultas quedó fuera de plazo. No está aprobada la aceptación de rendimiento. Primero desplegar las reglas identificables y diagnosticar la latencia de AWS con un ensayo corto; no es necesario repetir inmediatamente otros 15 minutos para confirmar el mismo fallo.
 
 1. La versión base/Pro ya fue desplegada según confirmación del usuario. El modo opcional de ocho solicitudes requiere actualizar el panel para usarlo desde la web; el runner local ya puede ejecutarlo.
 2. Ejecutar `npm run fire-drill:http` (15 minutos) y después `npm run fire-drill:http -- --pro` si se evaluará Pro. Revisar p95, errores/timeouts y turnos >2 s, no solo la salud del API.
@@ -63,7 +69,7 @@ El PDF se renderizó y revisó visualmente. La revisión visual del panel actual
 
 `npm run fire-drill:http -- --round=1 --fast --concurrency=8` conserva un POST por persona y el plazo de 500 ms desde el envío. El reporte diferencia cola, HTTP, códigos de respuesta, concurrencia máxima y duración completa. Se guarda aparte, marcado `CAPPED_NOT_FULL_CONCURRENCY`; no acredita cientos de solicitudes simultáneas. Puede superar dos segundos por turno en rondas grandes y puede seguir encontrando rechazos si otras funciones consumen la cuota o las peticiones canceladas siguen ejecutándose en Lambda. Las pruebas de concurrencia completa se mantienen como opción predeterminada.
 
-Las 20 pruebas funcionales incluyen límite de peticiones en vuelo y separación de cola/plazo HTTP. La aceptación de latencia de AWS sigue pendiente. Ver `docs/cierre-entrega.md` para los pasos de entrega independientes del aumento.
+Las 21 pruebas funcionales incluyen límite de peticiones en vuelo y separación de cola/plazo HTTP. La aceptación de latencia de AWS sigue pendiente. Ver `docs/cierre-entrega.md` para los pasos de entrega independientes del aumento.
 
 ### Ensayo real de AWS con ocho solicitudes simultáneas
 

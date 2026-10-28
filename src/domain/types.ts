@@ -76,6 +76,7 @@ export interface GameState {
   revision: number
   round: 1 | 2 | 3
   pro: boolean
+  runnerContactBites?: boolean
   phase: 'READY' | 'DECIDING'
   turnToken?: string
   roundFinished: boolean

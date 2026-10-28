@@ -75,11 +75,13 @@ function createStore(client = dynamoDb, table = () => process.env.WORLD_STATE_TA
   async function resetStoredWorldState(map, payload) {
     const round = payload.round ?? 1
     if (!ROUND_COUNTS[round] || !Number.isInteger(round) || (payload.pro !== undefined && typeof payload.pro !== 'boolean')
+      || (payload.runnerContactBites !== undefined && typeof payload.runnerContactBites !== 'boolean')
       || (payload.refugeCapacities !== undefined && (!payload.refugeCapacities || typeof payload.refugeCapacities !== 'object' || Array.isArray(payload.refugeCapacities)))) {
       throw Object.assign(new Error('Indica round 1, 2 o 3 y pro como booleano.'), { name: 'InvalidSimulationRequestError' })
     }
     const current = await readWorldState()
-    return saveState(createInitialState(map, 'manta-demo', ROUND_COUNTS[round], { round, pro: payload.pro, refugeCapacities: payload.refugeCapacities }), current)
+    return saveState(createInitialState(map, 'manta-demo', ROUND_COUNTS[round], { round, pro: payload.pro,
+      runnerContactBites: payload.runnerContactBites, refugeCapacities: payload.refugeCapacities }), current)
   }
   return { getOrCreateWorldState, readWorldState, readRouteCache, writeRouteCache,
     prepareStoredWorldState, resolveStoredWorldState, resetStoredWorldState }

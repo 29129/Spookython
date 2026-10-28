@@ -1,0 +1,46 @@
+{
+  "sourceReport": "reports/http/fire-drill-base-full-20261028T023857Z.json",
+  "rulesVariant": "NOT_RECORDED_BY_OLD_RUNNER",
+  "acceptance": "NOT_APPROVED",
+  "weightedSurvivalPercent": 74.91666666666667,
+  "rounds": [
+    {
+      "round": 1,
+      "rescued": 20,
+      "bitten": 0,
+      "p95HttpMs": 447.27,
+      "timeouts": 9,
+      "calls": 190,
+      "errorOrTimeoutPercent": 4.7368421052631575,
+      "latencyBandScore": 4,
+      "availabilityBandScore": 3
+    },
+    {
+      "round": 2,
+      "rescued": 45,
+      "bitten": 35,
+      "p95HttpMs": 469.33,
+      "timeouts": 21,
+      "calls": 608,
+      "errorOrTimeoutPercent": 3.4539473684210527,
+      "latencyBandScore": 4,
+      "availabilityBandScore": 3
+    },
+    {
+      "round": 3,
+      "rescued": 158,
+      "bitten": 42,
+      "p95HttpMs": 511.86,
+      "timeouts": 193,
+      "calls": 1750,
+      "errorOrTimeoutPercent": 11.028571428571428,
+      "latencyBandScore": 0,
+      "availabilityBandScore": 0
+    }
+  ],
+  "notes": [
+    "Los códigos registrados son 200 y 0 (sin respuesta HTTP); no se observaron 503.",
+    "El reporte no identifica la variante de mordida; no certifica la revisión actual.",
+    "Los umbrales se aplican por ronda; no se inventa nota total."
+  ]
+}

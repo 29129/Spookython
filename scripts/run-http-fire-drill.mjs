@@ -2,12 +2,14 @@ import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { advanceHttpTurn } from '../web/simulator-client.mjs'
+import { latencyScore, availabilityScore, rubricSummary } from './rubric.mjs'
 
 const baseUrl = (process.env.SPOOKYTHON_API_BASE_URL || '').replace(/\/$/, '')
 const apiKey = process.env.SIMULATOR_API_KEY
 if (!baseUrl || !apiKey) throw new Error('Configura SPOOKYTHON_API_BASE_URL y SIMULATOR_API_KEY localmente.')
 const pro = process.argv.includes('--pro')
 const fast = process.argv.includes('--fast')
+const runnerContactBites = process.argv.includes('--runner-contact-bites')
 const concurrencyArg = process.argv.find((argument) => argument.startsWith('--concurrency='))
 const concurrency = concurrencyArg ? Number(concurrencyArg.split('=')[1]) : Infinity
 if (concurrency !== Infinity && (!Number.isInteger(concurrency) || concurrency < 1 || concurrency > 200)) throw new Error('--concurrency debe ser un entero entre 1 y 200.')
@@ -44,7 +46,8 @@ const map = await request('/map')
 const rounds = []
 console.log(`Prueba HTTP ${pro ? 'Pro' : 'base'}: reinicia el mundo compartido. ${fast ? 'Modo acelerado; no es la prueba oficial de 5 minutos.' : 'Cada ronda dura 5 minutos; evita operar otro controlador.'}`)
 for (const round of selected) {
-  let state = await request('/simulacion/reiniciar', { round, pro })
+  let state = await request('/simulacion/reiniciar', { round, pro, runnerContactBites })
+  if (state.runnerContactBites !== runnerContactBites) throw new Error('La API no confirma el modo de mordida solicitado. Despliega la versión actual antes de certificar estas pruebas.')
   const baseline = new Map(state.survivors.map((survivor) => [survivor.id, baselineTurns(map, survivor.nodeId)]))
   const latencies = [], queueTimes = [], decisionTimes = []
   const httpStatuses = {}
@@ -70,8 +73,19 @@ for (const round of selected) {
     if (!fast) await sleep(Math.max(0, Math.min(2000, (index + 1) * 2000 - (performance.now() - started))))
   }
   if (!fast && !failure) {
-    while (performance.now() - started < 300000) await sleep(Math.min(2000, 300000 - (performance.now() - started)))
+    let nextNotice = 0
+    while (performance.now() - started < 300000) {
+      const elapsed = performance.now() - started
+      if (elapsed >= nextNotice) {
+        const seconds = Math.ceil((300000 - elapsed) / 1000)
+        const remaining = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
+        console.log(`R${round}: simulación finalizada en T${state.turn}. Esperando ${remaining} para completar los 5 minutos de la ronda; no está bloqueada.`)
+        nextNotice = elapsed + 30000
+      }
+      await sleep(Math.max(0, Math.min(2000, 300000 - (performance.now() - started))))
+    }
   }
+  console.log(`R${round}: medición terminada. ${round === selected.at(-1) ? 'Preparando reporte.' : 'Iniciando la siguiente ronda.'}`)
   const efficiencies = state.survivors.filter((survivor) => survivor.status === 'RESCUED' && survivor.rescuedTurn > 0 && baseline.get(survivor.id) !== null)
     .map((survivor) => Math.min(100, 100 * baseline.get(survivor.id) / survivor.rescuedTurn))
   rounds.push({ round, pro, survivorCount: state.survivors.length, actualDurationSeconds: Number(((performance.now() - started) / 1000).toFixed(2)),
@@ -81,17 +95,21 @@ for (const round of selected) {
     calls: latencies.length, maxConcurrentRequests: maxConcurrent, p95HttpMs: percentile(latencies, 0.95), maxHttpMs: percentile(latencies, 1),
     p95QueueMs: percentile(queueTimes, .95), p95QueuePlusHttpMs: percentile(decisionTimes, .95), httpStatuses,
     timeouts, errors, errorOrTimeoutPercent: latencies.length ? 100 * (timeouts + errors) / latencies.length : null,
+    latencyBandScore: latencyScore(percentile(latencies, .95)),
+    availabilityBandScore: availabilityScore(errors, timeouts, latencies.length),
+    rescuedPercent: 100 * state.summary.rescuedSurvivors / state.survivors.length,
     invalidMoves: state.metrics?.invalidMoves || 0, slowTurns, allCallsWithinDeadline: timeouts === 0,
     allTurnsWithinCadence: slowTurns === 0,
     refugeOverflow: state.refuges.some((refuge) => refuge.capacity !== null && refuge.occupied > refuge.capacity),
     failure })
 }
 const report = { generatedAt: new Date().toISOString(), source: 'HTTP real desde el equipo que ejecuta el script; no mide solo el algoritmo.',
-  baseUrl, pro, accelerated: fast, concurrencyLimit: Number.isFinite(concurrency) ? concurrency : null,
+  baseUrl, pro, runnerContactBites, accelerated: fast, concurrencyLimit: Number.isFinite(concurrency) ? concurrency : null,
+  rubric: rubricSummary(rounds, { fast, concurrency, runnerContactBites }),
   loadMode: Number.isFinite(concurrency) ? 'CAPPED_NOT_FULL_CONCURRENCY' : 'FULL_CONCURRENCY', deadlineMs: 500, targetTurnMs: 2000, rounds }
 const directory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../reports/http')
 await mkdir(directory, { recursive: true })
-const destination = path.join(directory, `fire-drill-${pro ? 'pro' : 'base'}${Number.isFinite(concurrency) ? `-capped-${concurrency}` : ''}-latest.json`)
+const destination = path.join(directory, `fire-drill-${pro ? 'pro' : 'base'}${runnerContactBites ? '-custom-bites' : ''}${Number.isFinite(concurrency) ? `-capped-${concurrency}` : ''}-latest.json`)
 await writeFile(destination, `${JSON.stringify(report, null, 2)}\n`)
 console.log(JSON.stringify(report, null, 2))
 console.log(`Reporte guardado: ${destination}`)

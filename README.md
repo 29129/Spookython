@@ -71,7 +71,9 @@ Las reservas pueden obligar a caminar más y Pro no garantiza mejorar todas las 
 
 ## Prueba de fuego HTTP real
 
-**Regla personalizada solicitada el 27/10/2026:** un corredor también muerde al atravesar un nodo ocupado por una persona activa en cualquiera de sus dos pasos. Se resuelve durante PREPARE, antes del movimiento humano, y no afecta a personas ya rescatadas ni a pasajeros a bordo. Esta regla amplía la especificación original del reto, que exige mordida por coincidencia al final del turno o cruce opuesto; no se presenta como una reproducción exacta de esa regla. Los reportes anteriores al cambio no son comparables directamente con las rondas nuevas.
+**Reglas para evaluación:** por defecto, se aplica la mordida original del reto (coincidencia al final del turno o cruce opuesto). La variante «Mordida al pasar» solicitada por el usuario se conserva en Ajustes, desactivada por defecto: `runnerContactBites: true` al reiniciar o `--runner-contact-bites` en el runner. Esa variante resuelve la mordida en PREPARE, antes del movimiento humano, y sus reportes se guardan por separado; no acredita el protocolo del reto. Los resultados de ambas variantes no deben mezclarse.
+
+La frase del reto «tres rondas seguidas de 5 minutos» se interpreta como cinco minutos cada una (15 en total); no indica cinco minutos entre las tres. Las pausas al terminar temprano completan cada ventana, sin generar carga adicional. La [revisión de la rúbrica](docs/rubrica-jurado.md) enumera requisitos, bandas de puntuación y límites de lo que permiten concluir los reportes.
 
 Después de desplegar, con las variables de la API y la clave en tu terminal:
 

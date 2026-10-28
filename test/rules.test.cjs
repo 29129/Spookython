@@ -150,6 +150,9 @@ test('un corredor muerde al pasar por el nodo antes del movimiento humano, inclu
     { id: 'Passenger', nodeId: 'B', status: 'ONBOARD', routeNodeIds: [] },
   ])
   current.reservations = { S1: 'F0', S2: 'F0' }
+  const official = prepareWorld(current, fixture, { type: 'NONE' })
+  assert.equal(official.survivors.find((survivor) => survivor.id === 'S1').status, 'ACTIVE')
+  current.runnerContactBites = true
   const prepared = prepareWorld(current, fixture, { type: 'NONE' })
   assert.equal(prepared.zombieMovements[0].toNodeId, 'B')
   assert.notEqual(prepared.zombies[0].nodeId, 'B')
