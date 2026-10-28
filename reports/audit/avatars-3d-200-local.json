@@ -1,0 +1,29 @@
+{
+  "generatedAt": "2026-10-28T07:06:12.661Z",
+  "source": "Preparacion CPU y geometria local, no mide FPS ni tiempo GPU del navegador.",
+  "survivors": 200,
+  "counts": {
+    "survivor": 200,
+    "walker": 2,
+    "runner": 2,
+    "horde": 1,
+    "truck": 5,
+    "refuge": 4,
+    "blocked": 0
+  },
+  "trianglesPerModel": {
+    "survivor": 196,
+    "walker": 184,
+    "runner": 184,
+    "horde": 552,
+    "truck": 248,
+    "refuge": 92,
+    "blocked": 72
+  },
+  "estimatedTriangles": 42096,
+  "maximumModelDrawBatches": 7,
+  "cpuPreparationP95Ms": 0.372,
+  "httpTurnAdvanced": true,
+  "invalidMoves": 0,
+  "visualBrowserReview": "Pendiente: acceso automatico al navegador deshabilitado."
+}

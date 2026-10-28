@@ -31,3 +31,27 @@
 #streetLayer .street.alley { stroke: #D6A864; stroke-width: 1.6; opacity: .8; }
 #streetLayer .street.blocked { stroke: var(--red); stroke-width: 4; opacity: 1; }
 .legend-line { border-top-color: #E7B968; }
+/* Local 2D / 3D camera selector. Controls stay clear of the simulation panel. */
+.view-switcher{position:absolute;left:24px;top:105px;z-index:3;display:flex;gap:3px;padding:4px;background:#0c1b25ed;border:1px solid #415863;border-radius:8px;box-shadow:0 6px 20px #0003;backdrop-filter:blur(12px)}
+.view-switcher button{min-width:49px;min-height:32px;border:1px solid transparent;border-radius:5px;background:transparent;color:#9eafbc;font:600 11px system-ui}
+.view-switcher button[aria-pressed=true]{background:#30291f;border-color:#c99e57;color:var(--amber)}
+.camera-controls{position:absolute;left:24px;top:157px;z-index:3;width:172px;padding:11px 12px;background:#0c1b25f0;border:1px solid #415863;border-radius:8px;box-shadow:0 6px 20px #0003;backdrop-filter:blur(12px)}
+.rotation-controls{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.rotation-controls button{width:31px;height:29px;border:1px solid #3f5967;border-radius:5px;background:#152a36;color:var(--amber);font-size:21px}
+.rotation-controls span{color:#b5c6d2;font:10px monospace}
+.camera-controls label{display:flex;justify-content:space-between;color:#b5c6d2;font-size:10px;margin-bottom:8px}
+.camera-controls output{font:10px monospace;color:var(--amber)}
+.camera-controls input[type=range]{width:100%;height:16px;margin:0;accent-color:var(--amber);cursor:pointer}
+.camera-controls p{margin-top:10px;color:#829aa9;font-size:9px;line-height:1.6}
+.view-3d .street{opacity:.72}
+.view-3d .route-line{stroke-width:2.8}
+@media(max-width:900px){.view-switcher{left:16px;top:110px}.camera-controls{left:16px;top:163px;width:157px}}
+@media(max-width:600px){.view-switcher{left:12px;top:93px}.view-switcher button{min-width:42px;min-height:28px}.camera-controls{left:12px;top:140px;width:148px;padding:9px}.camera-controls p{display:none}.rotation-controls{margin-bottom:8px}}
+/* True model geometry replaces SVG figures only after the 3D renderer is ready. */
+.view-3d.avatars-3d-ready #mapSvg .avatar-sprite,
+.view-3d.avatars-3d-ready #mapSvg .refuge-ring { visibility: hidden; }
+.view-3d.avatars-3d-ready .entity-halo { opacity: .45; }
+.camera-controls .model-notice { color: var(--amber); display: block; }
+/* Ground lines now share the map depth buffer and no longer cross over avatars. */
+.view-3d.native-network-ready #mapSvg #streetLayer,
+.view-3d.native-network-ready #mapSvg #routeLayer { display: none; }

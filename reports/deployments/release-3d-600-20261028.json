@@ -1,0 +1,72 @@
+{
+  "verifiedAt": "2026-10-28T07:30:39.476Z",
+  "release": "refugio-3d-600-20261028",
+  "nodes": 600,
+  "streets": 868,
+  "refugeSelection": "redundant-access-core",
+  "publicAssets": [
+    {
+      "url": "https://gkzb014d54.execute-api.us-east-1.amazonaws.com/health",
+      "status": 200,
+      "contentType": "application/json; charset=utf-8"
+    },
+    {
+      "url": "https://gkzb014d54.execute-api.us-east-1.amazonaws.com/map",
+      "status": 200,
+      "contentType": "application/json; charset=utf-8"
+    },
+    {
+      "url": "https://gkzb014d54.execute-api.us-east-1.amazonaws.com/estado",
+      "status": 200,
+      "contentType": "application/json; charset=utf-8"
+    },
+    {
+      "url": "https://d2qqi0nkfeyck5.cloudfront.net/",
+      "status": 200,
+      "contentType": "text/html"
+    },
+    {
+      "url": "https://d2qqi0nkfeyck5.cloudfront.net/app.js",
+      "status": 200,
+      "contentType": "text/javascript"
+    },
+    {
+      "url": "https://d2qqi0nkfeyck5.cloudfront.net/geographic-map.mjs",
+      "status": 200,
+      "contentType": "text/javascript"
+    },
+    {
+      "url": "https://d2qqi0nkfeyck5.cloudfront.net/map-3d.mjs",
+      "status": 200,
+      "contentType": "text/javascript"
+    },
+    {
+      "url": "https://d2qqi0nkfeyck5.cloudfront.net/avatar-models.mjs",
+      "status": 200,
+      "contentType": "text/javascript"
+    },
+    {
+      "url": "https://d2qqi0nkfeyck5.cloudfront.net/avatar-scene.mjs",
+      "status": 200,
+      "contentType": "text/javascript"
+    },
+    {
+      "url": "https://d2qqi0nkfeyck5.cloudfront.net/map-operational-layers.mjs",
+      "status": 200,
+      "contentType": "text/javascript"
+    },
+    {
+      "url": "https://d2qqi0nkfeyck5.cloudfront.net/vendor/three.mjs",
+      "status": 200,
+      "contentType": "text/javascript"
+    },
+    {
+      "url": "https://d2qqi0nkfeyck5.cloudfront.net/styles.css",
+      "status": 200,
+      "contentType": "text/css"
+    }
+  ],
+  "worldRequiresNewRound": true,
+  "provisionedConcurrency": 0,
+  "validation": "Recursos publicos HTTP y ubicacion de refugios; no es prueba de carga AWS ni medicion de FPS."
+}

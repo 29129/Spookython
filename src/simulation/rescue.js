@@ -57,10 +57,11 @@ function moveVehicles(state, map) {
   if (!state.pro) return
   const forbidden = dangerNodes(map, state)
   const adjacency = buildAdjacency(map, state.blockedStreetIds)
-  const claimed = new Set()
+  const claimed = new Map()
   state.vehicleMovements = []
   for (const vehicle of state.vehicles) {
     vehicle.routeNodeIds = [vehicle.nodeId]
+    let preferredPickup = vehicle.targetSurvivorId
     vehicle.targetSurvivorId = null
     for (let step = 0; step < 2; step += 1) {
       // Unload first, then board at most four people with a shelter reservation.
@@ -84,10 +85,11 @@ function moveVehicles(state, map) {
       let pickup = null
       if (vehicle.passengerIds.length < vehicle.capacity) {
         const candidates = state.survivors.filter((survivor) => survivor.status === 'ACTIVE'
-          && state.reservations[survivor.id] && !claimed.has(survivor.id))
+          && state.reservations[survivor.id] && (!claimed.has(survivor.id) || claimed.get(survivor.id) === vehicle.id))
           .map((survivor) => ({ survivor, path: shortestPath(vehicle.nodeId, [survivor.nodeId], adjacency, forbidden) }))
           .filter((candidate) => candidate.path.length > 1)
-          .sort((left, right) => left.path.length - right.path.length || left.survivor.id.localeCompare(right.survivor.id)).slice(0, 8)
+          .sort((left, right) => Number(right.survivor.id === preferredPickup) - Number(left.survivor.id === preferredPickup)
+            || left.path.length - right.path.length || left.survivor.id.localeCompare(right.survivor.id)).slice(0, 8)
         for (const candidate of candidates) {
           const route = findBestRoute(vehicle.nodeId, { ...map, refuges: [{ id: 'PICKUP', nodeId: candidate.survivor.nodeId }] }, state.blockedStreetIds, forbidden)
           if (!route) continue
@@ -98,12 +100,13 @@ function moveVehicles(state, map) {
           })
           const score = route.estimatedSeconds - (threatened ? 120 : 0)
           if (!pickup || score < pickup.score) pickup = { ...route, score, survivorId: candidate.survivor.id }
+          if (candidate.survivor.id === preferredPickup) { pickup = { ...route, score, survivorId: candidate.survivor.id }; break }
         }
       }
       const choosePickup = pickup && (!delivery || pickup.estimatedSeconds <= delivery.estimatedSeconds * 0.5 + 30)
       const route = choosePickup ? pickup : delivery
       if (!route || route.routeNodeIds.length < 2) break
-      if (choosePickup) { claimed.add(pickup.survivorId); vehicle.targetSurvivorId = pickup.survivorId }
+      if (choosePickup) { claimed.set(pickup.survivorId, vehicle.id); preferredPickup = pickup.survivorId; vehicle.targetSurvivorId = pickup.survivorId }
       vehicle.routeNodeIds = route.routeNodeIds
       const nextNodeId = route.routeNodeIds[1]
       const edge = (adjacency.get(vehicle.nodeId) || []).find((item) => item.nodeId === nextNodeId && item.streetId === route.routeStreetIds[0])

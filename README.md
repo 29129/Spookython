@@ -8,13 +8,13 @@ Los identificadores técnicos, las variables de entorno y el repositorio conserv
 
 ## Revisión de mapa y diseño
 
-Desplegada y verificada por HTTP el 28/10/2026. [Comprobante de publicación](reports/deployments/release-600-20261028.json). La revisión actual incorpora un mapa navegable con fondo azul petróleo, red operativa ámbar, iconos vectoriales, paneles flotantes y **600 intersecciones conectadas / 868 calles**. Mantiene cuatro refugios de demostración. El fondo OpenFreeMap requiere Internet y WebGL; sus calles adicionales son contexto, no parte de la red transitable del simulador. La vista 3D aún no está implementada.
+Desplegada y verificada por HTTP el 28/10/2026. [Comprobante de publicación](reports/deployments/release-3d-600-20261028.json). La revisión actual incorpora la corrección de recogidas de camionetas y refugios con accesos redundantes. Después de actualizar, preparar una ronda nueva para aplicar las ubicaciones corregidas. La revisión actual incorpora un mapa navegable con fondo azul petróleo, red operativa ámbar, iconos vectoriales, paneles flotantes y **600 intersecciones conectadas / 868 calles**. Mantiene cuatro refugios de demostración. El fondo OpenFreeMap requiere Internet y WebGL; sus calles adicionales son contexto, no parte de la red transitable del simulador. La revisión 3D incluye edificios con volumen y modelos low poly de personas, zombis, hordas, vehículos, refugios y barricadas. Un selector permite volver a 2D.
 
 Los ensayos AWS y la presentación de la entrega inicial describen la red anterior de 300 nodos. La ampliación tiene evidencia local separada en `reports/audit/fire-drill-map-600-latest.json`, sin medición de latencia AWS atribuida a la nueva red. Tras desplegar esta revisión, preparar una nueva ronda para renovar refugios y rutas del mundo compartido.
 
 ## Estado de la entrega
 
-API y panel desplegados en AWS. Cuota Lambda ampliada a 1.000. Verificación local: **28 pruebas aprobadas y compilación TypeScript correcta**.
+API y panel desplegados en AWS. Cuota Lambda ampliada a 1.000. Verificación local: **36 pruebas aprobadas y compilación TypeScript correcta**.
 
 - [Abrir aplicación](https://d2qqi0nkfeyck5.cloudfront.net).
 - API: `https://gkzb014d54.execute-api.us-east-1.amazonaws.com`; decisión: `POST /paso`.

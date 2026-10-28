@@ -36,7 +36,7 @@ async function localApi({ serveWeb = false, port = 0, map } = {}) {
     const path = new URL(request.url, 'http://localhost').pathname
     if (serveWeb && request.method === 'GET' && !['/health', '/map', '/estado'].includes(path)) {
       const relative = path === '/' ? '/index.html' : path
-      if (!['/index.html', '/avatars.html', '/styles.css', '/app.js', '/simulator-client.mjs', '/map-projection.mjs', '/map-avatars.mjs', '/geographic-map.mjs', '/vendor/maplibre-gl.mjs', '/vendor/maplibre-gl-worker.mjs', '/vendor/maplibre-gl-shared.mjs', '/vendor/maplibre-gl.css', '/assets/avatars/spookython-pixel-atlas.png'].includes(relative)) { response.writeHead(404); response.end(); return }
+      if (!['/index.html', '/avatars.html', '/styles.css', '/app.js', '/simulator-client.mjs', '/map-projection.mjs', '/map-avatars.mjs', '/geographic-map.mjs', '/map-3d.mjs', '/avatar-models.mjs', '/avatar-scene.mjs', '/map-operational-layers.mjs', '/vendor/three.mjs', '/vendor/maplibre-gl.mjs', '/vendor/maplibre-gl-worker.mjs', '/vendor/maplibre-gl-shared.mjs', '/vendor/maplibre-gl.css', '/assets/avatars/spookython-pixel-atlas.png'].includes(relative)) { response.writeHead(404); response.end(); return }
       const binary = relative.endsWith('.png')
       let content = await fs.readFile(require('node:path').join(__dirname, '../web', relative.slice(1)), binary ? undefined : 'utf8')
       if (relative === '/app.js') {

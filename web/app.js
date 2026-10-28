@@ -204,7 +204,7 @@ function drawEntities(project, state) {
     marker.setAttribute('tabindex', '0')
     marker.setAttribute('role', 'button')
     marker.setAttribute('aria-label', `Ver ruta de ${survivor.id}`)
-    marker.append(svgElement('circle', { r: 13, fill: 'transparent' }))
+    marker.append(svgElement('rect', { class: 'entity-hit-area', x: -15, y: -37, width: 30, height: 46, fill: 'transparent' }))
     marker.addEventListener('click', () => selectSurvivor(survivor.id))
     marker.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectSurvivor(survivor.id) } })
     const statusClass = survivor.status === 'BITTEN' ? 'survivor-bitten' : survivor.status === 'RESCUED' ? 'survivor-rescued' : 'survivor-mark'
@@ -296,6 +296,7 @@ function drawMap(state) {
 }
 function selectSurvivor(id) {
   selectedSurvivorId = id
+  geographicMap?.selectEntity(id)
   if (worldState) drawMap(worldState)
 }
 function updateSelection(project) {
@@ -317,10 +318,11 @@ function updateSelection(project) {
     card.style.top = `${Math.max(115, Math.min(position.y - 65, frame.clientHeight - 150))}px`
   }
 }
-document.querySelector('#closeSelection').addEventListener('click', () => { selectedSurvivorId = null; if (worldState) drawMap(worldState) })
+document.querySelector('#closeSelection').addEventListener('click', () => { selectedSurvivorId = null; geographicMap?.selectEntity(null); if (worldState) drawMap(worldState) })
 document.querySelector('#toggleNetwork').addEventListener('click', event => {
   const hidden = document.querySelector('#mapFrame').classList.toggle('network-hidden')
   event.currentTarget.setAttribute('aria-pressed', String(!hidden))
+  geographicMap?.setNetworkVisible(!hidden)
 })
 const helpDialog = document.querySelector('#helpDialog')
 document.querySelector('#helpButton').addEventListener('click', () => helpDialog.showModal())
@@ -329,8 +331,9 @@ helpDialog.addEventListener('click', event => { if (event.target === helpDialog)
 
 function render(state) {
   if (!mapData || !state) return
-  if (worldState?.revision !== undefined && state.revision !== undefined && state.revision < worldState.revision) return
+  if (worldState?.sessionId === state.sessionId && worldState?.revision !== undefined && state.revision !== undefined && state.revision < worldState.revision) return
   worldState = state
+  geographicMap?.updateEntities(state)
   const project = drawMap(state)
 
   elements.turnNumber.textContent = String(state.turn).padStart(2, '0')

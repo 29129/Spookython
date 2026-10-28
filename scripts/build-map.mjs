@@ -1,6 +1,8 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { createRequire } from 'node:module'
+const { resilientRefugeCandidates } = createRequire(import.meta.url)('../src/domain/refuge-sites.js')
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const inputPath = path.join(root, 'data/manta.osm.json')
@@ -146,11 +148,12 @@ const nodes = [...selectedIds].map((id) => {
   const point = coordinates.get(osmId)
   return { id, lat: point.lat, lng: point.lon }
 })
+const refugeCandidates = Object.hasOwn(options, 'resilient-refuges') ? resilientRefugeCandidates(nodes, streets) : nodes
 const selectedRefuges = []
-const firstRefuge = nodes.find((node) => node.id === nearestNode)
+const firstRefuge = refugeCandidates.find((node) => node.id === nearestNode) || refugeCandidates[0]
 selectedRefuges.push(firstRefuge)
 while (selectedRefuges.length < 4) {
-  const next = nodes
+  const next = refugeCandidates
     .filter((node) => !selectedRefuges.some((refuge) => refuge.id === node.id))
     .map((node) => ({
       node,
@@ -180,6 +183,7 @@ const graph = {
     nodeCount: nodes.length,
     streetCount: streets.length,
     selection: { method: 'connected-breadth-first', requestedNodeCount: selectedNodeCount },
+    refugeSelection: Object.hasOwn(options, 'resilient-refuges') ? 'redundant-access-core' : 'geographic-spread',
     speedAssumptionsMps: walkingSpeedMps,
   },
   nodes,

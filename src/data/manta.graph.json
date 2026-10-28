@@ -18,6 +18,7 @@
       "method": "connected-breadth-first",
       "requestedNodeCount": 600
     },
+    "refugeSelection": "redundant-access-core",
     "speedAssumptionsMps": {
       "AVENIDA": 1.6,
       "CALLE": 1.4,
@@ -1705,7 +1706,8 @@
     {
       "id": "osm:363712848",
       "lat": -0.9534468,
-      "lng": -80.7175572
+      "lng": -80.7175572,
+      "refugeId": "REFUGIO-4"
     },
     {
       "id": "osm:363668739",
@@ -2290,7 +2292,8 @@
     {
       "id": "osm:9316004106",
       "lat": -0.972286,
-      "lng": -80.7173927
+      "lng": -80.7173927,
+      "refugeId": "REFUGIO-3"
     },
     {
       "id": "osm:2352695019",
@@ -2480,7 +2483,8 @@
     {
       "id": "osm:6352840852",
       "lat": -0.9706706,
-      "lng": -80.7031774
+      "lng": -80.7031774,
+      "refugeId": "REFUGIO-2"
     },
     {
       "id": "osm:13254523849",
@@ -2665,8 +2669,7 @@
     {
       "id": "osm:365298946",
       "lat": -0.9486971,
-      "lng": -80.7210885,
-      "refugeId": "REFUGIO-2"
+      "lng": -80.7210885
     },
     {
       "id": "osm:11040597078",
@@ -2791,8 +2794,7 @@
     {
       "id": "osm:511154003",
       "lat": -0.9727296,
-      "lng": -80.7184078,
-      "refugeId": "REFUGIO-4"
+      "lng": -80.7184078
     },
     {
       "id": "osm:363644932",
@@ -2992,8 +2994,7 @@
     {
       "id": "osm:6945631852",
       "lat": -0.9716065,
-      "lng": -80.7024301,
-      "refugeId": "REFUGIO-3"
+      "lng": -80.7024301
     },
     {
       "id": "osm:13254540865",
@@ -24083,23 +24084,23 @@
     {
       "id": "REFUGIO-2",
       "name": "Refugio 2",
-      "nodeId": "osm:365298946",
-      "lat": -0.9486971,
-      "lng": -80.7210885
+      "nodeId": "osm:6352840852",
+      "lat": -0.9706706,
+      "lng": -80.7031774
     },
     {
       "id": "REFUGIO-3",
       "name": "Refugio 3",
-      "nodeId": "osm:6945631852",
-      "lat": -0.9716065,
-      "lng": -80.7024301
+      "nodeId": "osm:9316004106",
+      "lat": -0.972286,
+      "lng": -80.7173927
     },
     {
       "id": "REFUGIO-4",
       "name": "Refugio 4",
-      "nodeId": "osm:511154003",
-      "lat": -0.9727296,
-      "lng": -80.7184078
+      "nodeId": "osm:363712848",
+      "lat": -0.9534468,
+      "lng": -80.7175572
     }
   ]
 }

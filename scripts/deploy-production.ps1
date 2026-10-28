@@ -33,7 +33,7 @@ try {
     if (-not $env:MONTHLY_BUDGET_USD) { $env:MONTHLY_BUDGET_USD = '5' }
     $env:SPOOKYTHON_LAMBDA_MEMORY_MB = '1024'
     $env:SPOOKYTHON_PROVISIONED_CONCURRENCY = '0'
-    $env:SPOOKYTHON_DEPLOYMENT_LABEL = 'refugio-600-20261028'
+    $env:SPOOKYTHON_DEPLOYMENT_LABEL = 'refugio-3d-600-20261028'
     Write-Host 'Refugio 593: mapa de 600 nodos, Lambda 1024 MB, capacidad bajo demanda. No se imprime la clave.'
     if ($Action -eq 'Diff') {
         & npx.cmd cdk diff SpookythonStack --profile $Profile

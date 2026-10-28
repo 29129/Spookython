@@ -1,0 +1,74 @@
+{
+  "generatedAt": "2026-10-28T07:22:24.076Z",
+  "source": "Simulacion determinista local con worldId manta-demo, igual al servidor de la web; no es latencia AWS.",
+  "before": {
+    "round": 2,
+    "pro": true,
+    "turn": 150,
+    "rescued": 58,
+    "bitten": 3,
+    "active": 19
+  },
+  "rounds": [
+    {
+      "count": 20,
+      "pro": false,
+      "turns": 17,
+      "rescued": 20,
+      "bitten": 0,
+      "active": 0,
+      "invalidMoves": 0,
+      "overflow": false
+    },
+    {
+      "count": 20,
+      "pro": true,
+      "turns": 33,
+      "rescued": 20,
+      "bitten": 0,
+      "active": 0,
+      "invalidMoves": 0,
+      "overflow": false
+    },
+    {
+      "count": 80,
+      "pro": false,
+      "turns": 33,
+      "rescued": 80,
+      "bitten": 0,
+      "active": 0,
+      "invalidMoves": 0,
+      "overflow": false
+    },
+    {
+      "count": 80,
+      "pro": true,
+      "turns": 51,
+      "rescued": 80,
+      "bitten": 0,
+      "active": 0,
+      "invalidMoves": 0,
+      "overflow": false
+    },
+    {
+      "count": 200,
+      "pro": false,
+      "turns": 46,
+      "rescued": 199,
+      "bitten": 1,
+      "active": 0,
+      "invalidMoves": 0,
+      "overflow": false
+    },
+    {
+      "count": 200,
+      "pro": true,
+      "turns": 74,
+      "rescued": 196,
+      "bitten": 4,
+      "active": 0,
+      "invalidMoves": 0,
+      "overflow": false
+    }
+  ]
+}

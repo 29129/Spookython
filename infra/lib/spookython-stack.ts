@@ -44,7 +44,7 @@ export class SpookythonStack extends cdk.Stack {
       memorySize: apiMemoryMb,
       timeout: cdk.Duration.seconds(8),
       environment: {
-        MAP_VERSION: 'manta-600-v2',
+        MAP_VERSION: 'manta-600-v3',
         DEPLOYMENT_LABEL: process.env.SPOOKYTHON_DEPLOYMENT_LABEL || 'default',
         WORLD_STATE_TABLE_NAME: worldStateTable.tableName,
         SIMULATOR_API_KEY_SHA256: process.env.SIMULATOR_API_KEY_SHA256 || '',
