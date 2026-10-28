@@ -16,6 +16,21 @@ API y panel desplegados en AWS. Cuota Lambda ampliada a 1.000. Verificación loc
 - La capacidad temporal se retiró correctamente. **La aplicación actual funciona bajo demanda**: el resultado anterior no acredita su latencia. Los arranques en frío siguen siendo una limitación.
 - El nivel Pro está implementado y probado localmente; el ensayo citado es base y parcial. No acredita las tres rondas oficiales ni una calificación global de 10.
 
+## Acceso para evaluación
+
+1. Abre [Refugio 593](https://d2qqi0nkfeyck5.cloudfront.net).
+2. Copia la siguiente clave del simulador y pégala en el campo **Clave de control**:
+
+   ```text
+   PEGA_AQUI_LA_CLAVE_DEL_SIMULADOR
+   ```
+
+3. Selecciona la ronda y activa **Rescate Pro** si deseas probar predicción, cupos y camionetas.
+4. Pulsa **Preparar nueva ronda** y después **Iniciar simulación**.
+5. Observa el mapa, los rescates, las mordidas y las métricas. Puedes pausar o avanzar un turno.
+
+La partida es compartida: usar un solo controlador a la vez. La clave publicada para el concurso permite controlar y reiniciar esta demo; se cambiará al finalizar la evaluación. Este espacio corresponde únicamente a la clave del simulador, nunca a credenciales de AWS.
+
 ## Ejecutar y comprobar
 
 Requiere Node.js 22 y npm. Desde la raíz:
@@ -87,7 +102,7 @@ Después de desplegar, con las variables de la API y la clave en tu terminal:
 
 ```powershell
 $env:SPOOKYTHON_API_BASE_URL = 'https://gkzb014d54.execute-api.us-east-1.amazonaws.com'
-# SIMULATOR_API_KEY debe contener tu clave local, sin publicarla.
+# SIMULATOR_API_KEY debe contener la clave del simulador indicada para la evaluación.
 npm run fire-drill:http
 npm run fire-drill:http -- --pro
 ```
@@ -114,7 +129,7 @@ Después del aumento, repetir las pruebas sin `--concurrency` y con carga comple
 
 ## Despliegue AWS
 
-Región `us-east-1`; API Gateway HTTP API, Lambda Node.js 22 ARM64, DynamoDB bajo demanda y CloudWatch. El panel se publica desde S3 privado mediante CloudFront con OAC y HTTPS. La clave solo permanece en memoria de la pestaña y su hash SHA-256 se configura en Lambda; no se incluye en el repositorio ni en los logs.
+Región `us-east-1`; API Gateway HTTP API, Lambda Node.js 22 ARM64, DynamoDB bajo demanda y CloudWatch. El panel se publica desde S3 privado mediante CloudFront con OAC y HTTPS. Durante el uso del panel, la clave permanece en memoria de la pestaña; Lambda conserva su hash SHA-256. Para facilitar la evaluación del concurso, la clave de la demo se proporciona en la sección de acceso de este README; no se registra en los logs.
 
 Mantén las variables de entorno usadas en el despliegue anterior. Omitirlas puede eliminar el Budget del template o dejar la API sin clave:
 
@@ -146,6 +161,6 @@ Salidas: `ApiBaseUrl`, `WebUrl` y `WorldStateTableName`. Esta revisión añade l
 - [Repositorio público](https://github.com/29129/Spookython), con historial; publicar los últimos cambios y verificar que la rama remota incluya la versión entregada.
 - [Lista de cierre y acceso del evaluador](docs/cierre-entrega.md).
 
-Pendientes externos para cerrar la entrega: publicar los cambios en el repositorio, compartir la clave vigente por un canal privado con el evaluador y cargar los enlaces y el PDF en la plataforma antes del 28/10/2026 a las 10:00 de Ecuador. La evidencia de Budget está incorporada. Las tres rondas oficiales con la configuración final y la conciliación del gasto real no quedan acreditadas por el ensayo parcial. El equipo debe ensayar cinco minutos de pitch y tres de preguntas.
+Pendientes externos para cerrar la entrega: completar la clave del simulador en la sección de acceso para evaluación, publicar los cambios en el repositorio y cargar los enlaces y el PDF en la plataforma antes del 28/10/2026 a las 10:00 de Ecuador. La evidencia de Budget está incorporada. Las tres rondas oficiales con la configuración final y la conciliación del gasto real no quedan acreditadas por el ensayo parcial. El equipo debe ensayar cinco minutos de pitch y tres de preguntas.
 
 La demo comparte un mundo, no implementa cuentas ni partidas privadas. El mapa y refugios son de demostración; las velocidades y cupos son supuestos. El Budget de USD 5 avisa, pero no detiene gastos. Los datos actuales de Cost Explorer mezclan esta aplicación con servicios del sistema anterior y están redondeados; no demuestran costo cero de Refugio 593.
