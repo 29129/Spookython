@@ -4,10 +4,11 @@ El objetivo es p95 HTTP de POST /paso <=150 ms con 200 sobrevivientes simultaneo
 
 ## Cambios
 
-- PREPARE publica las decisiones dentro del mismo item STATE de DynamoDB. Cada escritura condicional actualiza estado, revision, sesion y decisiones de forma atomica.
+- PREPARE publica las decisiones en 16 registros independientes, distribuidos por clave de particion. Una transaccion de 17 escrituras actualiza STATE y los 16 grupos de forma atomica, con condicion sobre turno, revision y sesion del estado anterior.
 - /paso usa GetItem fuertemente consistente con proyeccion del sobreviviente solicitado, turno, sesion, fase y peligros/cierres. Valida posicion, turno, estado, vecindad y peligros antes de responder. No mantiene estado mutable del mundo en RAM de Lambda.
 - Los snapshots anteriores sin decisiones compactas mantienen compatibilidad. PREPARE/RESOLVE/reinicio publican el formato compacto al siguiente cambio.
-- La proyeccion reduce transferencia y deserializacion. No reduce unidades de lectura de DynamoDB; estas dependen del item completo. La copia compacta aumenta ligeramente el almacenamiento/escritura.
+- /paso ya no lee STATE en el camino habitual: lee un grupo pequeno, fuertemente consistente, y proyecta solo el sobreviviente solicitado. La prueba de 200 personas verifica que cada grupo completo serializado como AttributeValue ocupa menos de 4 KiB. La lectura se cobra por ese grupo, no por el mundo completo. Las transacciones agregan costo de escritura; no hay cache mutable en RAM.
+- Ante una transaccion rechazada no se publica ningun grupo. Los logs registran razones de throttling y cancelacion, sin cuerpos ni claves, para distinguir concentracion de lecturas de otros limites de DynamoDB.
 - CloudFront /api/* reenvia a API Gateway por HTTPS, elimina solamente el prefijo /api, preserva x-api-key y no reenvia Host del navegador. Cache deshabilitada y TTL de errores 5xx cero. Cada POST llega al origen.
 - La web publicada conserva el endpoint directo como predeterminado. Abrir https://d2qqi0nkfeyck5.cloudfront.net/?api=edge permite probar /api. El preview local conserva su API aislada.
 - El despliegue normal deja concurrencia aprovisionada en cero. Prepararla requiere una prueba temporal explicita; no hay capacidad pagada permanente nueva.

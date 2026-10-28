@@ -7,6 +7,31 @@ class MemoryDynamo {
   constructor() { this.items = new Map() }
   async send(command) {
     const input = command.input
+    if (command.constructor.name === 'TransactWriteCommand') {
+      // Stage all writes before committing: a failed condition changes no item.
+      const staged = new MemoryDynamo()
+      staged.items = structuredClone(this.items)
+      try {
+        for (const item of input.TransactItems) await staged.send({ input: item.Put })
+      } catch (error) {
+        if (error.name === 'ConditionalCheckFailedException') throw Object.assign(new Error('Transaction cancelled'), {
+          name: 'TransactionCanceledException', CancellationReasons: [{ Code: 'ConditionalCheckFailed' }],
+        })
+        throw error
+      }
+      // Recheck against the latest committed state after async staging.
+      const condition = input.TransactItems[0].Put
+      const key = JSON.stringify([condition.Item.worldId, condition.Item.entityId])
+      const previous = this.items.get(key)
+      const expected = condition.ExpressionAttributeValues
+      if (condition.ConditionExpression === 'attribute_not_exists(worldId)' ? !!previous
+        : !previous || previous.turn !== expected[':turn'] || (Object.hasOwn(expected, ':revision') && previous.revision !== expected[':revision'])
+          || (Object.hasOwn(expected, ':session') && previous.sessionId !== expected[':session'])) {
+        throw Object.assign(new Error('Transaction cancelled'), { name: 'TransactionCanceledException', CancellationReasons: [{ Code: 'ConditionalCheckFailed' }] })
+      }
+      this.items = staged.items
+      return {}
+    }
     const key = JSON.stringify([input.Key?.worldId || input.Item.worldId, input.Key?.entityId || input.Item.entityId])
     if (command.constructor.name === 'GetCommand') {
       const item = structuredClone(this.items.get(key))

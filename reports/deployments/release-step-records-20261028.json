@@ -1,0 +1,25 @@
+{
+  "verifiedAt": "2026-10-28T18:54:14.4789102Z",
+  "deploymentLabel": "refugio-step-records-20261028",
+  "deploymentSucceeded": true,
+  "testsPassed": 40,
+  "stepGroups": 16,
+  "atomicWriteItems": 17,
+  "provisionedConcurrencyInDeployedTemplate": 0,
+  "checks": [
+    {
+      "endpoint": "https://gkzb014d54.execute-api.us-east-1.amazonaws.com",
+      "health": "ok",
+      "nodes": 600,
+      "streets": 868
+    },
+    {
+      "endpoint": "https://d2qqi0nkfeyck5.cloudfront.net/api",
+      "health": "ok",
+      "nodes": 600,
+      "streets": 868
+    }
+  ],
+  "authenticated200PersonLatency": "PENDING_USER_TERMINAL",
+  "note": "Public health checks and local tests do not certify 150 ms."
+}

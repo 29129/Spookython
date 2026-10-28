@@ -33,9 +33,13 @@ function createHandler(store = defaultStore, map = mantaMap) {
     } catch (error) {
       if (['InvalidStepRequestError', 'InvalidSimulationRequestError'].includes(error.name)) return response(400, { message: error.message })
       if (['StaleTurnError', 'ConditionalCheckFailedException'].includes(error.name)) return response(409, { message: 'El turno cambió en otro cliente. Actualiza el estado.' })
-      console.error('Error de API:', error.name)
+      console.error(JSON.stringify({ event: 'api_dependency_error', error: error.name,
+        throttlingReasons: (error.ThrottlingReasons || []).map((reason) => reason.reason || reason.Reason),
+        cancellationReasons: (error.CancellationReasons || []).map((reason) => reason.Code) }))
       const errorCodes = { ProvisionedThroughputExceededException: 'DYNAMODB_THROTTLED', ThrottlingException: 'DYNAMODB_THROTTLED',
         RequestLimitExceeded: 'DYNAMODB_LIMIT', TimeoutError: 'DEPENDENCY_TIMEOUT', NetworkingError: 'DEPENDENCY_NETWORK' }
+      if (error.name === 'TransactionCanceledException' && error.CancellationReasons?.some((reason) =>
+        ['ThrottlingError', 'ProvisionedThroughputExceeded'].includes(reason.Code))) errorCodes.TransactionCanceledException = 'DYNAMODB_THROTTLED'
       return response(500, { message: 'No se pudo procesar la solicitud.', code: errorCodes[error.name] || 'INTERNAL_ERROR' })
     }
   }

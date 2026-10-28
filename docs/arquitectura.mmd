@@ -4,7 +4,7 @@ flowchart LR
     S3[(S3 privado<br/>panel web)]
     APIGW[API Gateway<br/>HTTP API]
     Lambda[Lambda Node.js 22<br/>reglas y planificador]
-    DDB[(DynamoDB<br/>estado y decisiones compactas atomicas)]
+    DDB[(DynamoDB<br/>STATE + 16 grupos de decisiones)]
     OSM[Datos del mapa<br/>OpenStreetMap empaquetados]
 
     Browser -->|HTML, CSS, JS| CF
@@ -15,6 +15,6 @@ flowchart LR
     CF -->|sin cache, x-api-key<br/>elimina prefijo /api| APIGW
     Browser -.->|endpoint directo para comparar| APIGW
     APIGW --> Lambda
-    Lambda -->|GetItem / PutItem| DDB
+    Lambda -->|GetItem compacto / TransactWriteItems| DDB
     Lambda -.->|mapa incluido en el paquete| OSM
     Budget[AWS Budgets<br/>USD 5 / mes + avisos]

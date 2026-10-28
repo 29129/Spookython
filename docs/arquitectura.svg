@@ -28,7 +28,7 @@
   <path class="edge dashed" d="M255 215C300 215 300 350 340 350"/><text class="label" x="260" y="285">Directo</text>
   <path class="edge" d="M460 195V290"/><text class="label" x="475" y="247">API sin cache + x-api-key</text>
   <path class="edge" d="M570 350H685"/><text class="label" x="580" y="333">integración Lambda</text>
-  <path class="edge" d="M915 350H990"/><text class="label" x="921" y="333">GetItem / PutItem</text>
+  <path class="edge" d="M915 350H990"/><text class="label" x="921" y="316">Lecturas compactas</text><text class="label" x="921" y="333">Transacciones</text>
   <path class="edge dashed" d="M805 410V480"/><text class="label" x="818" y="455">alertas de costo</text>
   <rect class="box" x="55" y="425" width="220" height="100"/>
   <text class="title" x="75" y="464">OpenFreeMap</text><text class="sub" x="75" y="493">Fondo externo · MapLibre</text>

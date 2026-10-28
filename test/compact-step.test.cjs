@@ -3,6 +3,8 @@ const assert = require('node:assert/strict')
 const { MemoryDynamo } = require('./support.cjs')
 const { createStore } = require('../src/simulation/store')
 const { getNextStep } = require('../src/routing/service')
+const { stepKey, STEP_GROUPS } = require('../src/simulation/step-records')
+const { marshall } = require('@aws-sdk/util-dynamodb')
 const map = require('../src/data/manta.graph.json')
 
 test('200 decisions use one strongly consistent projected read each and match full-state decisions', async () => {
@@ -16,6 +18,7 @@ test('200 decisions use one strongly consistent projected read each and match fu
     if (command.constructor.name === 'GetCommand') {
       reads++
       assert.equal(command.input.ConsistentRead, true)
+      assert.notEqual(command.input.Key.entityId, 'STATE')
       assert.match(command.input.ProjectionExpression, /stepDecisions\.#survivor/)
     }
     return send(command)
@@ -49,7 +52,7 @@ test('old snapshots without compact fields remain usable during deployment', asy
   const client = new MemoryDynamo()
   const store = createStore(client, () => 'test')
   const state = await store.prepareStoredWorldState(map, {})
-  for (const item of client.items.values()) delete item.stepDecisions
+  for (const [key, item] of client.items) if (item.entityId === 'CURRENT') client.items.delete(key)
   const survivor = state.survivors[0]
   const input = { sobrevivienteId: survivor.id, nodoActual: survivor.nodeId, turno: state.turn }
   assert.equal(await getNextStep(input, map, store), await getNextStep(input, map, { getOrCreateWorldState: async () => state }))
@@ -63,7 +66,8 @@ test('compact decisions still reject blocked edges, dangerous nodes and non-neig
   const edge = map.streets.find((street) => street.fromNode === survivor.nodeId || street.toNode === survivor.nodeId)
   const neighbor = edge.fromNode === survivor.nodeId ? edge.toNode : edge.fromNode
   const input = { sobrevivienteId: survivor.id, nodoActual: survivor.nodeId, turno: state.turn }
-  const item = [...client.items.values()].find((entry) => entry.entityId === 'STATE')
+  const key = stepKey(survivor.id)
+  const item = client.items.get(JSON.stringify([key.worldId, key.entityId]))
   item.stepDecisions[survivor.id][2] = neighbor
   item.blockedStreetIds = [edge.id]
   assert.equal(await getNextStep(input, map, store), survivor.nodeId)
@@ -76,4 +80,39 @@ test('compact decisions still reject blocked edges, dangerous nodes and non-neig
   assert.equal(await getNextStep(input, map, store), survivor.nodeId)
   item.stepDecisions[survivor.id] = [survivor.nodeId, 'RESCUED', neighbor]
   assert.equal(await getNextStep(input, map, store), survivor.nodeId)
+})
+
+test('compact storage stays below 4 KiB per group and failed writes cannot mix revisions', async () => {
+  const client = new MemoryDynamo()
+  const store = createStore(client, () => 'test')
+  await store.resetStoredWorldState(map, { round: 3, pro: true })
+  const first = await store.prepareStoredWorldState(map, {})
+  const groups = [...client.items.values()].filter((item) => item.entityId === 'CURRENT')
+  assert.equal(groups.length, STEP_GROUPS)
+  assert.equal((await store.readWorldState()).stepDecisions, undefined)
+  for (const group of groups) {
+    // Serialized AttributeValue JSON overestimates DynamoDB's item byte count.
+    assert(Buffer.byteLength(JSON.stringify(marshall(group))) < 4096)
+    assert.equal(group.revision, first.revision)
+    assert.equal(group.sessionId, first.sessionId)
+  }
+  const originalSend = client.send.bind(client)
+  const before = structuredClone(client.items)
+  client.send = async (command) => {
+    if (command.constructor.name === 'TransactWriteCommand') {
+      const invalid = structuredClone(command.input)
+      // Fail the last put after all earlier puts have been staged.
+      invalid.TransactItems.at(-1).Put.ConditionExpression = 'attribute_not_exists(worldId)'
+      return originalSend({ constructor: { name: 'TransactWriteCommand' }, input: invalid })
+    }
+    return originalSend(command)
+  }
+  await assert.rejects(store.resolveStoredWorldState(map, { turnToken: first.turnToken, decisions: [] }), { name: 'ConditionalCheckFailedException' })
+  assert.deepEqual(client.items, before)
+  client.send = originalSend
+  const resolved = await store.resolveStoredWorldState(map, { turnToken: first.turnToken, decisions: [] })
+  for (const group of [...client.items.values()].filter((item) => item.entityId === 'CURRENT')) {
+    assert.equal(group.revision, resolved.revision)
+    assert.equal(group.phase, 'READY')
+  }
 })

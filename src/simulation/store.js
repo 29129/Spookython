@@ -1,5 +1,6 @@
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb')
-const { DynamoDBDocumentClient, GetCommand, PutCommand } = require('@aws-sdk/lib-dynamodb')
+const { DynamoDBDocumentClient, GetCommand, PutCommand, TransactWriteCommand } = require('@aws-sdk/lib-dynamodb')
+const { stepKey, stepRecords } = require('./step-records')
 
 const dynamoDb = DynamoDBDocumentClient.from(new DynamoDBClient({ region: process.env.AWS_REGION || 'us-east-1', maxAttempts: 2 }),
   { marshallOptions: { removeUndefinedValues: true } })
@@ -20,9 +21,8 @@ function createStore(client = dynamoDb, table = () => process.env.WORLD_STATE_TA
   }
   async function saveState(next, current) {
     next.revision = (current?.revision || 0) + 1
-    // One atomic item keeps the projected decisions and current turn in sync.
-    next.stepDecisions = Object.fromEntries(next.survivors.map((survivor) => [survivor.id,
-      [survivor.nodeId, survivor.status, survivor.routeNodeIds?.[1] || survivor.nodeId]]))
+    // Remove the legacy duplicated decisions from STATE when upgrading a live world.
+    delete next.stepDecisions
     const values = { TableName: tableName(), Item: { ...next, entityId: 'STATE' } }
     if (!current) values.ConditionExpression = 'attribute_not_exists(worldId)'
     else {
@@ -43,12 +43,23 @@ function createStore(client = dynamoDb, table = () => process.env.WORLD_STATE_TA
         values.ConditionExpression += ' AND #session = :session'
       }
     }
-    await client.send(new PutCommand(values))
+    try {
+      await client.send(new TransactWriteCommand({ TransactItems: [
+        { Put: values },
+        ...stepRecords(next).map((Item) => ({ Put: { TableName: tableName(), Item } })),
+      ] }))
+    } catch (error) {
+      if (error.name === 'TransactionCanceledException' && error.CancellationReasons?.some((reason) =>
+        ['ConditionalCheckFailed', 'TransactionConflict'].includes(reason.Code))) {
+        throw Object.assign(new Error('El mundo cambio durante la escritura atomica.'), { name: 'ConditionalCheckFailedException' })
+      }
+      throw error
+    }
     return next
   }
   async function readStepState(survivorId) {
     const result = await client.send(new GetCommand({ TableName: tableName(),
-      Key: { worldId: 'manta-demo', entityId: 'STATE' }, ConsistentRead: true,
+      Key: stepKey(survivorId), ConsistentRead: true,
       ProjectionExpression: '#turn, sessionId, revision, phase, schemaVersion, stepDecisions.#survivor, blockedStreetIds, dangerNodeIds',
       ExpressionAttributeNames: { '#turn': 'turn', '#survivor': survivorId } }))
     return result.Item || null
