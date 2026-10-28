@@ -1,8 +1,10 @@
-# Spookython
+# Refugio 593
 
 Motor de evacuación y simulador de Manta para SpookyThon 2026. Usa un grafo real de OpenStreetMap con 300 intersecciones, 424 calles y cuatro refugios. El panel muestra zombis, sobrevivientes, rutas, cierres y rescate en vivo.
 
 La revisión del 26/10/2026 contrastó el código con las capturas del reto y corrigió el plan inicial: **las hordas bloquean su nodo y todos sus vecinos**. El nivel Pro está implementado como opción al crear una ronda. Consulta la comparación completa en [docs/auditoria-requisitos.md](docs/auditoria-requisitos.md).
+
+Los identificadores técnicos, las variables de entorno y el repositorio conservan el nombre Spookython para mantener la compatibilidad del despliegue.
 
 ## Estado de la entrega
 
@@ -146,4 +148,4 @@ Salidas: `ApiBaseUrl`, `WebUrl` y `WorldStateTableName`. Esta revisión añade l
 
 Pendientes externos para cerrar la entrega: publicar los cambios en el repositorio, compartir la clave vigente por un canal privado con el evaluador y cargar los enlaces y el PDF en la plataforma antes del 28/10/2026 a las 10:00 de Ecuador. La evidencia de Budget está incorporada. Las tres rondas oficiales con la configuración final y la conciliación del gasto real no quedan acreditadas por el ensayo parcial. El equipo debe ensayar cinco minutos de pitch y tres de preguntas.
 
-La demo comparte un mundo, no implementa cuentas ni partidas privadas. El mapa y refugios son de demostración; las velocidades y cupos son supuestos. El Budget de USD 5 avisa, pero no detiene gastos. Los datos actuales de Cost Explorer mezclan esta aplicación con servicios del sistema anterior y están redondeados; no demuestran costo cero de Spookython.
+La demo comparte un mundo, no implementa cuentas ni partidas privadas. El mapa y refugios son de demostración; las velocidades y cupos son supuestos. El Budget de USD 5 avisa, pero no detiene gastos. Los datos actuales de Cost Explorer mezclan esta aplicación con servicios del sistema anterior y están redondeados; no demuestran costo cero de Refugio 593.

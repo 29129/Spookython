@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
-  <title id="title">Arquitectura de Spookython</title>
+  <title id="title">Arquitectura de Refugio 593</title>
   <desc id="desc">Navegador, CloudFront, bucket S3 privado, API Gateway, Lambda, DynamoDB, datos OpenStreetMap y AWS Budgets.</desc>
   <defs>
     <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6ee7f9"/></marker>
@@ -8,7 +8,7 @@
     </style>
   </defs>
   <rect class="bg" width="1200" height="620" rx="22"/>
-  <text class="top" x="52" y="54">Spookython · despliegue AWS us-east-1</text>
+  <text class="top" x="52" y="54">Refugio 593 · despliegue AWS us-east-1</text>
   <rect class="box" x="55" y="145" width="200" height="100"/>
   <text class="title" x="85" y="185">Navegador</text><text class="sub" x="70" y="215">Panel y simulador HTTP</text>
   <rect class="box" x="350" y="95" width="220" height="100"/>

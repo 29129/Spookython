@@ -15,7 +15,7 @@ pdfmetrics.registerFont(TTFont('ArialBold', 'C:/Windows/Fonts/arialbd.ttf'))
 report = json.loads((ROOT / 'reports/audit/fire-drill-latest.json').read_text(encoding='utf-8-sig'))
 http = json.loads((ROOT / 'reports/audit/http-local-200-latest.json').read_text(encoding='utf-8-sig'))
 c = canvas.Canvas(str(OUT), pagesize=(960, 540))
-c.setTitle('Spookython - Motor de evacuación de Manta')
+c.setTitle('Refugio 593 - Motor de evacuación de Manta')
 BG, PANEL, TEXT, MUTED, CYAN, GOLD = map(colors.HexColor, ['#0b1220', '#142238', '#f2f6ff', '#b5c5dd', '#6ee7f9', '#ffce6c'])
 
 def para(text, x, top, width, size=18, color=TEXT, bold=False):
@@ -30,7 +30,7 @@ def page(number, eyebrow, title):
     para(eyebrow.upper(), 44, 505, 850, 11, CYAN, True)
     para(title, 44, 468, 870, 32, TEXT, True)
     c.setStrokeColor(colors.HexColor('#30415b')); c.line(44, 52, 916, 52)
-    para('SPOOKYTHON 2026 | MANTA | Evidencia actualizada 28/10/2026', 44, 35, 700, 9, MUTED)
+    para('REFUGIO 593 | MANTA | Evidencia actualizada 28/10/2026', 44, 35, 700, 9, MUTED)
     para(f'{number}/6', 880, 35, 40, 10, MUTED)
 
 def card(x, top, width, title, text, height=230):
@@ -38,10 +38,10 @@ def card(x, top, width, title, text, height=230):
     end = para(title, x+18, top-18, width-36, 21, CYAN, True)
     para(text, x+18, end-18, width-36, 16)
 
-page(1, 'Track A - Escape de Manta zombi', 'Cada turno cambia la ruta')
+page(1, 'SpookyThon 2026 - Track A', 'Refugio 593')
 para('Un motor que guía a cada sobreviviente hacia un refugio mientras cambian las calles y se mueven los peligros.', 44, 373, 485, 24)
 para('300 intersecciones reales<br/>424 calles - 4 refugios<br/>Rondas de 20, 80 y 200 personas', 44, 244, 470, 21, CYAN)
-para('Panel en vivo, API de decisión y simulador desplegados en AWS.', 44, 124, 500, 15, MUTED)
+para('Cada ruta cuenta. Cada vida también.', 44, 124, 500, 15, MUTED)
 nodes = [(610,330),(710,385),(815,330),(710,250),(835,190)]
 c.setStrokeColor(MUTED); c.setLineWidth(2)
 for a,b in [(0,1),(1,2),(0,3),(3,2),(3,4),(2,4)]: c.line(*nodes[a], *nodes[b])

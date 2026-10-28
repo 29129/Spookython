@@ -4,7 +4,7 @@
 
 ### 0:00–0:35 — Problema
 
-“Spookython simula una evacuación en Manta durante un brote. Los sobrevivientes necesitan llegar a un refugio por calles que pueden bloquearse, mientras los zombis se mueven. El reto técnico es elegir el siguiente paso rápido y válido para cada sobreviviente.”
+“Refugio 593 simula una evacuación en Manta durante un brote. Los sobrevivientes necesitan llegar a un refugio por calles que pueden bloquearse, mientras los zombis se mueven. El reto técnico es elegir el siguiente paso rápido y válido para cada sobreviviente.”
 
 ### 0:35–1:15 — Demostración del producto
 
