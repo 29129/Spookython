@@ -8,6 +8,9 @@ const apiKey = process.env.SIMULATOR_API_KEY
 if (!baseUrl || !apiKey) throw new Error('Configura SPOOKYTHON_API_BASE_URL y SIMULATOR_API_KEY localmente.')
 const pro = process.argv.includes('--pro')
 const fast = process.argv.includes('--fast')
+const concurrencyArg = process.argv.find((argument) => argument.startsWith('--concurrency='))
+const concurrency = concurrencyArg ? Number(concurrencyArg.split('=')[1]) : Infinity
+if (concurrency !== Infinity && (!Number.isInteger(concurrency) || concurrency < 1 || concurrency > 200)) throw new Error('--concurrency debe ser un entero entre 1 y 200.')
 const roundArg = process.argv.find((argument) => argument.startsWith('--round='))
 const selected = roundArg ? [Number(roundArg.split('=')[1])] : [1, 2, 3]
 if (selected.some((round) => ![1, 2, 3].includes(round))) throw new Error('--round debe ser 1, 2 o 3.')
@@ -43,18 +46,22 @@ console.log(`Prueba HTTP ${pro ? 'Pro' : 'base'}: reinicia el mundo compartido. 
 for (const round of selected) {
   let state = await request('/simulacion/reiniciar', { round, pro })
   const baseline = new Map(state.survivors.map((survivor) => [survivor.id, baselineTurns(map, survivor.nodeId)]))
-  const latencies = []
+  const latencies = [], queueTimes = [], decisionTimes = []
+  const httpStatuses = {}
   let timeouts = 0, errors = 0, maxConcurrent = 0, slowTurns = 0, failure = null
   const started = performance.now()
   for (let index = 0; index < 150 && !state.roundFinished; index += 1) {
     if (!fast && performance.now() - started >= 300000) break
     try {
-      const result = await advanceHttpTurn({ baseUrl, apiKey, currentState: state })
+      const result = await advanceHttpTurn({ baseUrl, apiKey, currentState: state, concurrency })
       state = result.state
-      maxConcurrent = Math.max(maxConcurrent, result.decisions.length)
+      maxConcurrent = Math.max(maxConcurrent, result.maxConcurrentRequests)
       if (result.durationMs > 2000) slowTurns += 1
       for (const decision of result.decisions) {
         latencies.push(decision.durationMs)
+        queueTimes.push(decision.queueMs)
+        decisionTimes.push(decision.queueMs + decision.durationMs)
+        httpStatuses[decision.httpStatus] = (httpStatuses[decision.httpStatus] || 0) + 1
         if (decision.timedOut || decision.durationMs > 500) timeouts += 1
         else if (decision.error) errors += 1
       }
@@ -72,6 +79,7 @@ for (const round of selected) {
     activeAtEnd: state.summary.activeSurvivors, survivalPercent: 100 * (state.survivors.length - state.summary.bittenSurvivors) / state.survivors.length,
     meanRouteEfficiencyPercent: efficiencies.length ? Number((efficiencies.reduce((sum, value) => sum + value, 0) / efficiencies.length).toFixed(2)) : null,
     calls: latencies.length, maxConcurrentRequests: maxConcurrent, p95HttpMs: percentile(latencies, 0.95), maxHttpMs: percentile(latencies, 1),
+    p95QueueMs: percentile(queueTimes, .95), p95QueuePlusHttpMs: percentile(decisionTimes, .95), httpStatuses,
     timeouts, errors, errorOrTimeoutPercent: latencies.length ? 100 * (timeouts + errors) / latencies.length : null,
     invalidMoves: state.metrics?.invalidMoves || 0, slowTurns, allCallsWithinDeadline: timeouts === 0,
     allTurnsWithinCadence: slowTurns === 0,
@@ -79,10 +87,11 @@ for (const round of selected) {
     failure })
 }
 const report = { generatedAt: new Date().toISOString(), source: 'HTTP real desde el equipo que ejecuta el script; no mide solo el algoritmo.',
-  baseUrl, pro, accelerated: fast, deadlineMs: 500, targetTurnMs: 2000, rounds }
+  baseUrl, pro, accelerated: fast, concurrencyLimit: Number.isFinite(concurrency) ? concurrency : null,
+  loadMode: Number.isFinite(concurrency) ? 'CAPPED_NOT_FULL_CONCURRENCY' : 'FULL_CONCURRENCY', deadlineMs: 500, targetTurnMs: 2000, rounds }
 const directory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../reports/http')
 await mkdir(directory, { recursive: true })
-const destination = path.join(directory, `fire-drill-${pro ? 'pro' : 'base'}-latest.json`)
+const destination = path.join(directory, `fire-drill-${pro ? 'pro' : 'base'}${Number.isFinite(concurrency) ? `-capped-${concurrency}` : ''}-latest.json`)
 await writeFile(destination, `${JSON.stringify(report, null, 2)}\n`)
 console.log(JSON.stringify(report, null, 2))
 console.log(`Reporte guardado: ${destination}`)

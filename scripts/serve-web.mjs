@@ -10,6 +10,7 @@ const contentTypes = {
   '.js': 'text/javascript; charset=utf-8',
   '.mjs': 'text/javascript; charset=utf-8',
   '.svg': 'image/svg+xml',
+  '.png': 'image/png',
 }
 
 const server = createServer(async (request, response) => {

@@ -26,6 +26,43 @@ test('la horda prohíbe su nodo y todos los vecinos, incluso con una calle cerra
   assert.equal(planNextStep(input(), fixture, current, null).siguienteNodo, 'C')
 })
 
+test('la horda avanza una calle en turnos 5 y 10, respeta cierres y traslada su zona peligrosa', () => {
+  const fixture = graph(['H', 'B', 'C', 'F'], [['H', 'B'], ['B', 'C'], ['C', 'F']])
+  const zombie = { id: 'H', type: 'HORDE', nodeId: 'H' }
+  const current = state([zombie], [])
+  const moves = []
+  for (let turn = 0; turn < 5; turn += 1) moveZombie(zombie, [], buildAdjacency(fixture), turn, moves)
+  assert.equal(zombie.nodeId, 'H')
+  assert.equal(moves.length, 0)
+  moveZombie(zombie, [], buildAdjacency(fixture), 5, moves)
+  assert.equal(zombie.nodeId, 'B')
+  assert.equal(moves.length, 1)
+  assert.deepEqual([...dangerNodes(fixture, current)].sort(), ['B', 'C', 'H'])
+  for (let turn = 6; turn < 10; turn += 1) moveZombie(zombie, [], buildAdjacency(fixture), turn, moves)
+  assert.equal(zombie.nodeId, 'B')
+  moveZombie(zombie, [], buildAdjacency(fixture, ['E0']), 10, moves)
+  assert.equal(zombie.nodeId, 'C')
+  assert.equal(moves.length, 2)
+  assert.equal(moves[1].streetId, 'E1')
+  assert.deepEqual([...dangerNodes(fixture, current)].sort(), ['B', 'C', 'F'])
+  moveZombie(zombie, [], buildAdjacency(fixture, ['E1', 'E2']), 15, moves)
+  assert.equal(zombie.nodeId, 'C')
+  assert.equal(moves.length, 2)
+})
+
+test('la horda inicia en un cruce central de Manta sin ocupar refugios ni posiciones inseguras', () => {
+  const current = createInitialState(map, 'central-horde', 80)
+  const horde = current.zombies.find((zombie) => zombie.type === 'HORDE')
+  const node = map.nodes.find((candidate) => candidate.id === horde.nodeId)
+  const center = map.nodes.reduce((sum, item) => ({lat: sum.lat + item.lat / map.nodes.length, lng: sum.lng + item.lng / map.nodes.length}), {lat: 0, lng: 0})
+  const distance = (item) => (item.lat - center.lat) ** 2 + (item.lng - center.lng) ** 2
+  assert(distance(node) < distance(map.nodes[231]))
+  assert(buildAdjacency(map).get(node.id).length >= 3)
+  assert(!map.refuges.some((refuge) => refuge.nodeId === node.id))
+  const forbidden = dangerNodes(map, current)
+  assert(current.survivors.every((survivor) => !forbidden.has(survivor.nodeId)))
+})
+
 test('Dijkstra pondera distancia/velocidad y descarta caché bloqueada', () => {
   const fixture = graph(['A', 'B', 'C', 'F'], [['A', 'B', 10], ['B', 'F', 10], ['A', 'C', 30], ['C', 'F', 30]])
   fixture.streets[2].speedMps = fixture.streets[3].speedMps = 10

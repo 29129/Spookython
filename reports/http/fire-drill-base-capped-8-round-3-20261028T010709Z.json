@@ -1,0 +1,44 @@
+{
+  "generatedAt": "2026-10-28T01:07:09.390Z",
+  "source": "HTTP real desde el equipo que ejecuta el script; no mide solo el algoritmo.",
+  "baseUrl": "https://gkzb014d54.execute-api.us-east-1.amazonaws.com",
+  "pro": false,
+  "accelerated": true,
+  "concurrencyLimit": 8,
+  "loadMode": "CAPPED_NOT_FULL_CONCURRENCY",
+  "deadlineMs": 500,
+  "targetTurnMs": 2000,
+  "rounds": [
+    {
+      "round": 3,
+      "pro": false,
+      "survivorCount": 200,
+      "actualDurationSeconds": 87.76,
+      "turns": 150,
+      "completed": true,
+      "rescued": 196,
+      "bitten": 0,
+      "activeAtEnd": 4,
+      "survivalPercent": 100,
+      "meanRouteEfficiencyPercent": 86.19,
+      "calls": 2293,
+      "maxConcurrentRequests": 8,
+      "p95HttpMs": 128.21,
+      "maxHttpMs": 472.52,
+      "p95QueueMs": 2423.97,
+      "p95QueuePlusHttpMs": 2540.6,
+      "httpStatuses": {
+        "200": 2293
+      },
+      "timeouts": 0,
+      "errors": 0,
+      "errorOrTimeoutPercent": 0,
+      "invalidMoves": 0,
+      "slowTurns": 8,
+      "allCallsWithinDeadline": true,
+      "allTurnsWithinCadence": false,
+      "refugeOverflow": false,
+      "failure": null
+    }
+  ]
+}

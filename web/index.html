@@ -13,8 +13,8 @@
     <main class="shell">
       <header class="topbar">
         <a class="brand" href="/" aria-label="Spookython, inicio">
-          <span class="brand-mark" aria-hidden="true">S</span>
-          <span><strong>SPOOKYTHON</strong><small>SIMULADOR DE MANTA</small></span>
+          <span class="brand-mark" aria-hidden="true">S<span>+</span></span>
+          <span><strong>SPOOKYTHON</strong><small>CENTRO DE EVACUACIÓN</small></span>
         </a>
         <div class="connection" id="connection" data-state="loading">
           <span class="connection-dot"></span>
@@ -24,9 +24,9 @@
 
       <section class="intro">
         <div>
-          <p class="eyebrow">ZONA DE EVACUACIÓN · ECUADOR</p>
-          <h1>Manta <span>en tiempo real</span></h1>
-          <p class="intro-copy">Sigue el movimiento de sobrevivientes y zombis hacia los refugios.</p>
+          <p class="eyebrow"><span class="location-mark" aria-hidden="true">◎</span> MANTA, ECUADOR · OPERACIÓN DE RESCATE</p>
+          <h1>Cada ruta <span>cuenta.</span></h1>
+          <p class="intro-copy">Una ciudad en riesgo. Encuentra el camino a un lugar seguro.</p>
         </div>
         <div class="turn-chip"><span>TURNO</span><strong id="turnNumber">--</strong></div>
       </section>
@@ -42,9 +42,10 @@
       <section class="workspace">
         <article class="map-card">
           <div class="card-heading">
-            <div><p class="eyebrow">MAPA OPERATIVO</p><h2>Red vial de Manta</h2></div>
+            <div><p class="eyebrow">01 / MAPA OPERATIVO</p><h2>El rescate, en vivo</h2></div>
             <div class="map-meta"><span class="live-pulse"></span><span id="mapUpdated">Esperando datos</span></div>
           </div>
+          <div class="map-toolbar"><span id="roundBadge">Esperando ronda</span><span>300 intersecciones · 4 refugios</span></div>
           <div class="map-frame" id="mapFrame">
             <svg id="mapSvg" viewBox="0 0 1000 700" role="img" aria-label="Mapa de calles, refugios, sobrevivientes y zombis de Manta">
               <defs>
@@ -56,7 +57,7 @@
                   <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
                 </filter>
               </defs>
-              <rect width="1000" height="700" fill="url(#grid)" />
+              <rect width="100%" height="100%" fill="url(#grid)" />
               <g id="streetLayer"></g>
               <g id="routeLayer"></g>
               <g id="refugeLayer"></g>
@@ -64,43 +65,63 @@
             </svg>
             <div class="map-overlay" id="mapMessage">Cargando el mapa de Manta…</div>
             <div class="north-mark" aria-hidden="true"><span>N</span><i></i></div>
+            <div class="map-caption" aria-hidden="true">MANTA <span>RED DE EVACUACIÓN</span></div>
           </div>
           <div class="legend" aria-label="Leyenda del mapa">
             <span><i class="legend-line avenue"></i>Avenida</span>
             <span><i class="legend-line street"></i>Calle</span>
-            <span><i class="legend-line blocked"></i>Bloqueada</span>
-            <span><i class="legend-dot survivor"></i>Sobreviviente</span>
-            <span><i class="legend-dot walker"></i>Caminante</span>
-            <span><i class="legend-dot runner"></i>Corredor</span>
-            <span><i class="legend-dot horde"></i>Horda</span>
-            <span><i class="legend-square"></i>Refugio</span>
-            <span><i class="legend-truck"></i>Camioneta Pro</span>
+            <span><i class="legend-avatar" data-avatar="blocked"></i>Bloqueada</span>
+            <span><i class="legend-avatar" data-avatar="survivor"></i>Sobreviviente</span>
+            <span><i class="legend-avatar" data-avatar="walker"></i>Caminante</span>
+            <span><i class="legend-avatar" data-avatar="runner"></i>Corredor</span>
+            <span><i class="legend-avatar" data-avatar="horde"></i>Horda</span>
+            <span><i class="legend-avatar" data-avatar="refuge"></i>Refugio</span>
+            <span><i class="legend-avatar" data-avatar="truck"></i>Camioneta Pro</span>
             <span><i class="legend-prediction"></i>Predicción Pro</span>
           </div>
           <p class="attribution">Calles de OpenStreetMap · Los refugios son ubicaciones de demostración, no refugios oficiales.</p>
+          <a class="avatar-gallery-link" href="/avatars.html">Ver los avatares →</a>
         </article>
 
         <aside class="side-column">
           <article class="control-card">
-            <p class="eyebrow">CONTROL DE SIMULACIÓN</p>
+            <p class="eyebrow">02 / CENTRO DE CONTROL</p>
             <h2 id="simulationTitle">Modo espectador</h2>
             <p class="control-copy" id="simulationHelp">El mapa se actualiza automáticamente. Ingresa la clave de control para iniciar o avanzar turnos.</p>
             <label class="field-label" for="apiKey">Clave de control</label>
-            <input id="apiKey" type="password" autocomplete="off" spellcheck="false" placeholder="x-api-key" />
-            <label class="field-label" for="roundSelect">Ronda</label>
-            <select id="roundSelect"><option value="1">Anochecer · 20 · caminantes</option><option value="2">Medianoche · 80 · puente colapsado</option><option value="3">Apocalipsis · 200 · todos los tipos</option></select>
-            <label class="pro-toggle"><input id="proMode" type="checkbox" /> Activar nivel Pro</label>
+            <input id="apiKey" type="password" autocomplete="off" spellcheck="false" placeholder="Ingresa tu clave para controlar" />
+            <fieldset class="round-picker" id="roundSelect">
+              <legend class="field-label">Elige la ronda</legend>
+              <label class="round-option"><input type="radio" name="round" value="1" checked /><span><strong>Anochecer</strong><small>Caminantes</small></span><span class="round-count">20<small>personas</small></span></label>
+              <label class="round-option"><input type="radio" name="round" value="2" /><span><strong>Medianoche</strong><small>Corredores, horda y puente colapsado</small></span><span class="round-count">80<small>personas</small></span></label>
+              <label class="round-option"><input type="radio" name="round" value="3" /><span><strong>Apocalipsis</strong><small>Todos los tipos · dos calles bloqueadas</small></span><span class="round-count">200<small>personas</small></span></label>
+            </fieldset>
+            <label class="pro-toggle"><input id="proMode" type="checkbox" /><span>Rescate Pro<small>Predicción, cupos y 5 camionetas</small></span><span class="pro-tag">PRO</span></label>
+            <details class="advanced-settings"><summary>Ajustes de la ronda</summary>
+            <fieldset class="round-picker concurrency-picker" id="concurrencySelect">
+              <legend class="field-label">Solicitudes simultáneas</legend>
+              <label class="round-option"><input type="radio" name="concurrency" value="0" checked /><span><strong>Carga completa</strong><small>Una solicitud por persona, al mismo tiempo.</small></span></label>
+              <label class="round-option"><input type="radio" name="concurrency" value="8" /><span><strong>Hasta 8 a la vez</strong><small>Alternativa temporal para la cuota reducida.</small></span></label>
+            </fieldset>
+            <p class="control-copy">El modo de 8 puede alargar el turno. Comprueba los turnos &gt;2 s; no acredita 200 solicitudes simultáneas.</p>
             <label class="field-label" for="refugeCapacity">Cupos por refugio (Pro, opcional)</label>
             <input id="refugeCapacity" type="number" min="0" max="1000" placeholder="Automático: 5, 20 o 50" disabled />
-            <button class="button secondary" id="resetButton" type="button">Nueva ronda · reiniciar el mundo</button>
-            <p class="control-copy">Nueva ronda reinicia la simulación compartida. Pro activa predicción, reservas y 5 camionetas.</p>
+            </details>
+            <button class="button secondary" id="resetButton" type="button">↻ Preparar nueva ronda</button>
+            <p class="reset-note">Reinicia la partida para todos los espectadores.</p>
             <div class="control-buttons">
-              <button class="button primary" id="startButton" type="button">Iniciar simulación</button>
+              <button class="button primary" id="startButton" type="button">Iniciar simulación →</button>
               <button class="button secondary" id="stepButton" type="button">Avanzar un turno</button>
               <button class="button stop" id="stopButton" type="button" disabled>Pausar</button>
             </div>
             <div class="simulation-state" id="simulationState"><span class="state-indicator"></span><span>Lectura en vivo activa</span></div>
             <div class="error-box" id="errorBox" role="alert" hidden></div>
+          </article>
+
+          <article class="rescue-card">
+            <div class="rescue-heading"><p class="eyebrow">PROGRESO DEL RESCATE</p><strong id="rescuePercent">—</strong></div>
+            <progress id="rescueProgress" max="100" value="0" aria-label="Porcentaje de personas rescatadas"></progress>
+            <p id="rescueCaption">Esperando datos de la ronda.</p>
           </article>
 
           <article class="event-card">

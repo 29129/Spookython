@@ -57,7 +57,7 @@ Todos los POST requieren `x-api-key`. Las lecturas son públicas. Una revisión 
 
 Dijkstra pondera cada calle por `distancia_m / velocidad_mps`, con una cola de prioridad. Los desplazamientos del juego usan calles como pasos: un sobreviviente avanza una por turno; una camioneta, dos. Se tratan las calles como conexiones peatonales en ambos sentidos. Las velocidades iniciales son supuestos de simulación: avenida 1,6 m/s, calle 1,4, callejón 1,0 y puente 1,2.
 
-Los caminantes eligen dirección pseudoaleatoria reproducible cada dos turnos. Los corredores avanzan hasta dos calles y persiguen personas a tres nodos o menos. Las hordas permanecen inmóviles y prohíben su nodo y los vecinos. Los dormidos no se publican hasta que una persona queda a dos nodos o menos; despiertan como caminantes. Compartir nodo o cruzarse por una calle en sentidos opuestos causa mordida. El planificador evita amenazas visibles y valida las rutas guardadas cuando cambian zombis o cierres. Una calle cerrada se retira de la red dibujada y se marca con una cruz.
+Los caminantes eligen dirección pseudoaleatoria reproducible cada dos turnos. Los corredores avanzan hasta dos calles y persiguen personas a tres nodos o menos. Las hordas empiezan en un cruce próximo al centro de la red y avanzan una calle abierta cada cinco turnos (5, 10, 15…), con dirección pseudoaleatoria reproducible. Si no tienen salida, esperan. Prohíben su nodo y todos sus vecinos; la zona peligrosa se actualiza al moverse. Esta cadencia concreta interpreta la regla «casi inmóvil» del reto. Los dormidos no se publican hasta que una persona queda a dos nodos o menos; despiertan como caminantes. Compartir nodo o cruzarse por una calle en sentidos opuestos causa mordida. El planificador evita amenazas visibles y valida las rutas guardadas cuando cambian zombis o cierres. Una calle cerrada se retira de la red dibujada y se marca con el avatar de barricada.
 
 ## Nivel Pro
 
@@ -85,6 +85,20 @@ Cada comando reinicia el mundo y ejecuta tres rondas consecutivas de cinco minut
 El comando termina con código de salida 1 si detecta una ronda incompleta, errores, timeouts, turnos de más de dos segundos, pasos inválidos o desbordes. El reporte conserva el detalle para distinguir problemas funcionales y de rendimiento; no elimina los fallos para presentar una prueba aprobada.
 
 El script serial `scripts/check-public-api.ps1` sirve para una comprobación pequeña en modo base. No sustituye las rondas ni se usa para certificar concurrencia.
+
+### Alternativa temporal con cuota de 10
+
+El 27/10/2026 se confirmó una cuota regional de 10 ejecuciones Lambda, compartida con otras aplicaciones. El panel mostró errores 503 y CloudWatch registró limitaciones al alcanzar 10 ejecuciones. El aumento a 1.000 está solicitado, con caso abierto; no se da por aprobado.
+
+El panel permite seleccionar **Hasta 8** antes de iniciar. Desde la terminal, sin desplegar los cambios del panel:
+
+```powershell
+npm run fire-drill:http -- --round=1 --fast --concurrency=8
+```
+
+Esto reinicia el mundo compartido: pausa cualquier otro controlador. Es un ensayo acelerado y limitado, no la aceptación de 200 solicitudes simultáneas. Cada petición conserva su plazo de 500 ms desde su envío; la cola se mide aparte (`p95QueueMs`, `p95QueuePlusHttpMs`) y se incluye en la duración total del turno. Los turnos >2 s siguen fallando la comprobación. El reporte `fire-drill-base-capped-8-latest.json` no sobrescribe el de carga completa y añade los códigos HTTP observados. Un timeout del navegador no garantiza cancelar la ejecución en AWS, por lo que ocho peticiones en vuelo tampoco garantizan evitar todos los rechazos.
+
+Después del aumento, repetir las pruebas sin `--concurrency` y con carga completa en el panel. Este cambio no añade concurrencia aprovisionada ni modifica las cuotas de AWS.
 
 ## Despliegue AWS
 
@@ -115,10 +129,11 @@ Salidas: `ApiBaseUrl`, `WebUrl` y `WorldStateTableName`. Esta revisión añade l
 - [Auditoría contra el reto](docs/auditoria-requisitos.md).
 - [Arquitectura SVG](docs/arquitectura.svg) y [fuente Mermaid](docs/arquitectura.mmd).
 - [Declaración de costos](docs/costos.md), que distingue gasto de cuenta y del proyecto anterior.
-- [Captura del Budget](docs/budget.png). El usuario confirmó el correo; falta sustituir la captura antigua, que muestra 0/1 verificado.
+- [Captura del Budget y correo verificado](docs/budget.png), con dos alertas asociadas; [resumen del presupuesto de USD 5](docs/budget-resumen.png). Evidencias actualizadas el 27/10/2026.
 - [Presentación PDF](output/pdf/presentacion-spookython.pdf) y [guion de cinco minutos](docs/pitch.md).
-- [Repositorio público](https://github.com/29129/Spookython), con historial; falta publicar mediante commit/push esta revisión local.
+- [Repositorio público](https://github.com/29129/Spookython), con historial; publicar los últimos cambios y verificar que la rama remota incluya la versión entregada.
+- [Lista de cierre y acceso del evaluador](docs/cierre-entrega.md).
 
-Pendientes para afirmar cumplimiento completo: desplegar esta revisión, ejecutar las rondas HTTP con carga real y revisar latencia/disponibilidad (incluidos arranques en frío), incorporar la captura actualizada del Budget y cargar los entregables en la plataforma antes del miércoles 28/10/2026 a las 10:00 de Ecuador. El pitch de cinco minutos y sus tres minutos de preguntas deben ensayarse con el equipo; un PDF o guion no acredita el ensayo.
+El usuario confirmó el despliegue de base y Pro. Pendientes para afirmar cumplimiento completo: desplegar la alternativa opcional del panel si se usará, resolver la capacidad regional y ejecutar las rondas HTTP con carga real y revisar latencia/disponibilidad (incluidos arranques en frío), publicar los últimos cambios y cargar los entregables en la plataforma antes del miércoles 28/10/2026 a las 10:00 de Ecuador. La evidencia actualizada del Budget con destinatario verificado ya está incorporada. El pitch de cinco minutos y sus tres minutos de preguntas deben ensayarse con el equipo; un PDF o guion no acredita el ensayo.
 
 La demo comparte un mundo, no implementa cuentas ni partidas privadas. El mapa y refugios son de demostración; las velocidades y cupos son supuestos. El Budget de USD 5 avisa, pero no detiene gastos. Los datos actuales de Cost Explorer mezclan esta aplicación con servicios del sistema anterior y están redondeados; no demuestran costo cero de Spookython.

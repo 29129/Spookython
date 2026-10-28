@@ -8,6 +8,7 @@
     "test": "node --test test/*.test.cjs test/*.test.mjs",
     "fire-drill:http": "node scripts/run-http-fire-drill.mjs",
     "web:serve": "node scripts/serve-web.mjs",
+    "preview:local": "node scripts/preview-local.mjs",
     "fire-drill": "node scripts/run-fire-drill.mjs",
     "map:build": "node scripts/build-map.mjs",
     "map:validate": "node scripts/validate-map.mjs",

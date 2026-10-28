@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>Avatares · Spookython</title><link rel="stylesheet" href="/styles.css" />
+<style>
+  .avatar-gallery { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; padding: 20px 0; }
+  .avatar-gallery figure { margin: 0; padding: 22px; border: 1px solid #354553; border-radius: 10px; background: #131c25; }
+  .avatar-gallery .preview { display: flex; align-items: end; justify-content: center; gap: 24px; min-height: 112px; margin-bottom: 18px; }
+  .avatar-gallery figcaption { text-align: center; color: #f4bd62; font-size: 14px; }
+  .gallery-link { color: #f4bd62; font-size: 12px; }
+</style></head>
+<body><main class="shell"><header class="topbar"><a class="gallery-link" href="/">← Volver al mapa</a><span class="eyebrow">SPOOKYTHON · PIXEL ART</span></header>
+<section class="intro"><div><h1>Avatares <span>del mapa.</span></h1><p class="intro-copy">Vista de los ocho diseños en 32 y 64 píxeles. El dormido permanece oculto en la simulación.</p></div></section>
+<section class="avatar-gallery" id="gallery" aria-label="Galería de avatares"></section>
+<script type="module">
+  import { avatarSprite } from './map-avatars.mjs'
+  const names = {survivor:'Sobreviviente', walker:'Caminante', runner:'Corredor', horde:'Horda', sleeper:'Dormido', refuge:'Refugio', truck:'Camioneta', blocked:'Calle bloqueada'}
+  for (const [type, name] of Object.entries(names)) {
+    const figure = document.createElement('figure'), preview = document.createElement('div'), caption = document.createElement('figcaption')
+    preview.className = 'preview'
+    for (const size of [32, 64]) {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+      svg.setAttribute('width', size); svg.setAttribute('height', size); svg.setAttribute('viewBox', '-32 -32 64 64'); svg.setAttribute('aria-hidden', 'true')
+      svg.append(avatarSprite(type, 64, {centered:true})); preview.append(svg)
+    }
+    caption.textContent = name; figure.append(preview, caption); document.querySelector('#gallery').append(figure)
+  }
+</script></main></body></html>

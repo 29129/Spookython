@@ -1,4 +1,8 @@
 import { advanceHttpTurn } from './simulator-client.mjs'
+import { createMapProjection } from './map-projection.mjs'
+import { avatarSprite, hydrateAvatarLegends } from './map-avatars.mjs'
+
+hydrateAvatarLegends()
 
 const API_BASE_URL = 'https://gkzb014d54.execute-api.us-east-1.amazonaws.com'
 const REFRESH_INTERVAL_MS = 2000
@@ -35,12 +39,17 @@ const elements = {
   eventDescription: document.querySelector('#eventDescription'),
   roundSelect: document.querySelector('#roundSelect'),
   proMode: document.querySelector('#proMode'),
+  concurrencySelect: document.querySelector('#concurrencySelect'),
   refugeCapacity: document.querySelector('#refugeCapacity'),
   resetButton: document.querySelector('#resetButton'),
   proPanel: document.querySelector('#proPanel'),
   refugeStatus: document.querySelector('#refugeStatus'),
   vehicleStatus: document.querySelector('#vehicleStatus'),
   httpMetrics: document.querySelector('#httpMetrics'),
+  roundBadge: document.querySelector('#roundBadge'),
+  rescuePercent: document.querySelector('#rescuePercent'),
+  rescueProgress: document.querySelector('#rescueProgress'),
+  rescueCaption: document.querySelector('#rescueCaption'),
 }
 
 let mapData = null
@@ -86,20 +95,11 @@ async function fetchJson(path, options = {}) {
 }
 
 function makeProjection(map) {
-  const bounds = map.metadata.boundingBox
-  const padding = 42
-  const latCorrection = Math.cos(((bounds.south + bounds.north) / 2) * Math.PI / 180)
-  const width = (bounds.east - bounds.west) * latCorrection
-  const height = bounds.north - bounds.south
-  const scale = Math.min((1000 - padding * 2) / width, (700 - padding * 2) / height)
-  const drawnWidth = width * scale
-  const drawnHeight = height * scale
-  const left = (1000 - drawnWidth) / 2
-  const top = (700 - drawnHeight) / 2
-  return ([lng, lat]) => ({
-    x: left + (lng - bounds.west) * latCorrection * scale,
-    y: top + (bounds.north - lat) * scale,
-  })
+  const svg = elements.streetLayer.ownerSVGElement
+  const width = Math.max(1, svg.clientWidth)
+  const height = Math.max(1, svg.clientHeight)
+  svg.setAttribute('viewBox', `0 0 ${width} ${height}`)
+  return createMapProjection(map, width, height)
 }
 
 function typeClass(type) {
@@ -119,8 +119,8 @@ function drawStreets(project, blockedStreetIds) {
     })
     if (blocked.has(street.id)) {
       const center = project(street.geometry[Math.floor(street.geometry.length / 2)])
-      const marker = svgElement('text', { x: center.x, y: center.y, class: 'closed-street-marker' })
-      marker.textContent = '×'
+      const marker = svgElement('g', { transform: `translate(${center.x} ${center.y})` })
+      marker.append(avatarSprite('blocked', 25, { centered: true }))
       const title = svgElement('title')
       title.textContent = `${street.name || street.type} cerrada: arista retirada de la red transitable`
       marker.append(title)
@@ -179,8 +179,8 @@ function drawRefuges(project, state) {
     const point = project([refuge.lng, refuge.lat])
     const marker = svgElement('g', { transform: `translate(${point.x} ${point.y})` })
     marker.append(svgElement('circle', { class: 'refuge-ring', r: 11 }))
-    marker.append(svgElement('rect', { class: 'refuge-core', x: -4, y: -4, width: 8, height: 8, rx: 1.5 }))
-    const label = svgElement('text', { class: 'refuge-label', x: 0, y: 23 })
+    marker.append(avatarSprite('refuge', 38))
+    const label = svgElement('text', { class: 'refuge-label', x: 0, y: 17 })
     label.textContent = `R${index + 1}`
     marker.append(label)
     const title = svgElement('title')
@@ -202,6 +202,7 @@ function drawEntities(project, state) {
     const statusClass = survivor.status === 'BITTEN' ? 'survivor-bitten' : survivor.status === 'RESCUED' ? 'survivor-rescued' : 'survivor-mark'
     if (survivor.status === 'ACTIVE') marker.append(svgElement('circle', { class: 'entity-halo', r: 7.5 }))
     marker.append(svgElement('circle', { class: statusClass, r: survivor.status === 'ACTIVE' ? 3.3 : 3.8 }))
+    if (survivor.status === 'ACTIVE') marker.append(avatarSprite('survivor', 25))
     const title = svgElement('title')
     title.textContent = `${survivor.id} · ${survivor.status}`
     marker.append(title)
@@ -213,9 +214,9 @@ function drawEntities(project, state) {
     if (!node) continue
     const point = project([node.lng, node.lat])
     const marker = svgElement('g', { transform: `translate(${point.x} ${point.y})` })
-    marker.append(svgElement('rect', { x: -8, y: -5, width: 16, height: 10, rx: 2, class: 'vehicle-mark' }))
-    const label = svgElement('text', { x: 0, y: 0, class: 'entity-label' })
-    label.textContent = vehicle.passengerIds.length
+    marker.append(avatarSprite('truck', 35))
+    const label = svgElement('text', { x: 0, y: 15, class: 'vehicle-passengers' })
+    label.textContent = `${vehicle.passengerIds.length}/4`
     marker.append(label)
     const title = svgElement('title')
     title.textContent = `${vehicle.id} · ${vehicle.passengerIds.length}/4 pasajeros · objetivo ${vehicle.targetSurvivorId || 'refugio'}`
@@ -243,19 +244,18 @@ function drawEntities(project, state) {
     }
   }
 
-  const zombieLabels = { WALKER: 'C', RUNNER: 'R', HORDE: 'H', SLEEPER: 'D' }
+  const zombieAvatars = { WALKER: 'walker', RUNNER: 'runner', HORDE: 'horde' }
   for (const zombie of state.zombies) {
+    // Sleepers are invisible; after waking, the engine changes their type to WALKER.
+    if (!zombieAvatars[zombie.type]) continue
     const node = mapData.nodesById.get(zombie.nodeId)
     if (!node) continue
     const point = project([node.lng, node.lat])
     const marker = svgElement('g', { transform: `translate(${point.x} ${point.y})` })
     if (zombie.type === 'HORDE') marker.append(svgElement('circle', { cx: 0, cy: 0, r: 16, fill: 'rgba(189,118,255,.08)', stroke: 'rgba(189,118,255,.38)', 'stroke-width': 1 }))
-    marker.append(svgElement('circle', { class: `zombie-mark ${zombie.type.toLowerCase()}`, r: 8 }))
-    const label = svgElement('text', { class: 'entity-label', x: 0, y: .5 })
-    label.textContent = zombieLabels[zombie.type] || '?'
-    marker.append(label)
+    marker.append(avatarSprite(zombieAvatars[zombie.type], zombie.type === 'HORDE' ? 38 : 30))
     const title = svgElement('title')
-    title.textContent = `${zombie.id} · ${zombie.type}`
+    title.textContent = `${zombie.id} · ${zombie.type}${zombie.type === 'HORDE' ? ' · avanza una calle cada 5 turnos' : ''}`
     marker.append(title)
     elements.entityLayer.append(marker)
   }
@@ -293,6 +293,12 @@ function render(state) {
   elements.bittenCount.textContent = state.summary.bittenSurvivors
   elements.zombieCount.textContent = state.summary.visibleZombies
   elements.blockedCount.textContent = state.summary.blockedStreets
+  const total = state.survivors.length
+  const rescuedPercent = total ? Math.round(100 * state.summary.rescuedSurvivors / total) : 0
+  elements.rescuePercent.textContent = `${rescuedPercent}%`
+  elements.rescueProgress.value = rescuedPercent
+  elements.rescueCaption.textContent = `${state.summary.rescuedSurvivors} de ${total} personas llegaron a un refugio${state.roundFinished ? ' · Ronda finalizada' : ''}.`
+  elements.roundBadge.textContent = `Ronda ${state.round || 1} · ${state.pro ? 'Rescate Pro' : 'Rescate base'}`
   elements.mapUpdated.textContent = `Actualizado ${new Date(state.updatedAt).toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`
   elements.mapMessage.hidden = true
   elements.nodeCount.textContent = mapData.nodes.length
@@ -319,6 +325,10 @@ async function loadMap() {
   drawRefuges(makeProjection(mapData))
 }
 
+new ResizeObserver(() => {
+  if (mapData && worldState) render(worldState)
+}).observe(elements.streetLayer.ownerSVGElement)
+
 async function refreshState() {
   if (refreshInFlight) return
   refreshInFlight = true
@@ -343,6 +353,7 @@ function setControlState(running) {
   elements.resetButton.disabled = busy
   elements.roundSelect.disabled = busy
   elements.proMode.disabled = busy
+  elements.concurrencySelect.disabled = busy
   elements.refugeCapacity.disabled = busy || !elements.proMode.checked
   elements.simulationTitle.textContent = running ? 'Simulación en curso' : 'Modo espectador'
   elements.simulationHelp.textContent = running
@@ -361,6 +372,7 @@ async function advanceOneTurn(apiKey) {
   try {
     const result = await advanceHttpTurn({
     baseUrl: API_BASE_URL, apiKey, currentState: worldState,
+    concurrency: Number(elements.concurrencySelect.querySelector('input:checked').value) || Infinity,
     onProgress: (completed, total) => {
       elements.simulationHelp.textContent = `Turno en proceso: ${completed}/${total} respuestas de /paso. Las tardías se quedan quietas.`
     },
@@ -441,7 +453,7 @@ elements.resetButton.addEventListener('click', async () => {
   try {
     observedSlowTurns = 0
     lastHttpTurnMs = 0
-    const payload = { round: Number(elements.roundSelect.value), pro: elements.proMode.checked }
+    const payload = { round: Number(elements.roundSelect.querySelector('input:checked').value), pro: elements.proMode.checked }
     if (payload.pro && elements.refugeCapacity.value !== '') {
       const capacity = Number(elements.refugeCapacity.value)
       if (!Number.isInteger(capacity) || capacity < 0 || capacity > 1000) throw new Error('Indica cupos entre 0 y 1000.')

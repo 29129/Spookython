@@ -16,8 +16,22 @@ function makeInitialZombies(map, round) {
     : round === 2 ? ['WALKER', 'WALKER', 'RUNNER', 'RUNNER', 'HORDE']
       : ['WALKER', 'WALKER', 'RUNNER', 'RUNNER', 'HORDE', 'SLEEPER']
   const used = new Set(map.refuges.map((refuge) => refuge.nodeId))
+  const adjacency = buildAdjacency(map)
+  const center = map.nodes.reduce((sum, node) => ({ lat: sum.lat + node.lat / map.nodes.length,
+    lng: sum.lng + node.lng / map.nodes.length }), { lat: 0, lng: 0 })
+  const correction = Math.cos(center.lat * Math.PI / 180)
+  const centerDistance = (node) => (node.lat - center.lat) ** 2 + ((node.lng - center.lng) * correction) ** 2
+  const centralNodes = [...map.nodes].sort((a, b) => centerDistance(a) - centerDistance(b) || a.id.localeCompare(b.id))
   return types.flatMap((type, index) => {
     let node = map.nodes[[18, 72, 121, 178, 231, 278][index] % map.nodes.length]
+    if (type === 'HORDE') {
+      // Prefer a central junction without initially closing the entrance to a refuge.
+      node = centralNodes.find((candidate) => !used.has(candidate.id)
+        && (adjacency.get(candidate.id)?.length || 0) >= 3
+        && !adjacency.get(candidate.id).some((edge) => map.refuges.some((refuge) => refuge.nodeId === edge.nodeId)))
+        || centralNodes.find((candidate) => !used.has(candidate.id))
+    }
+    if (!node) return []
     if (used.has(node.id)) node = map.nodes.find((candidate) => !used.has(candidate.id))
     if (!node) return []
     used.add(node.id)

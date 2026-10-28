@@ -26,20 +26,31 @@ export async function requestStep(baseUrl, apiKey, survivor, turn, fetchImpl = f
   } finally { clearTimeout(deadline) }
 }
 
-export async function advanceHttpTurn({ baseUrl, apiKey, currentState, fetchImpl = fetch, onProgress = () => {} }) {
+export async function advanceHttpTurn({ baseUrl, apiKey, currentState, concurrency = Infinity, fetchImpl = fetch, onProgress = () => {} }) {
+  if (concurrency !== Infinity && (!Number.isInteger(concurrency) || concurrency < 1)) throw new Error('La concurrencia debe ser un entero positivo.')
   const started = performance.now()
   const prepared = await jsonRequest(baseUrl, '/estado/avanzar', apiKey,
     { phase: 'PREPARE', expectedTurn: currentState.turn }, fetchImpl)
   const active = prepared.survivors.filter((survivor) => survivor.status === 'ACTIVE')
   let completed = 0
   onProgress(0, active.length)
-  // One real HTTP request per active survivor. The deadline applies independently.
-  const decisions = await Promise.all(active.map(async (survivor) => {
-    const decision = await requestStep(baseUrl, apiKey, survivor, prepared.turn, fetchImpl)
-    onProgress(++completed, active.length)
-    return decision
+  // Each dispatched HTTP request keeps its 500 ms deadline. Queue time is separate
+  // and remains included in total turn time; capped mode is not a full-load test.
+  const decisions = new Array(active.length)
+  const queuedAt = performance.now()
+  let cursor = 0, inFlight = 0, maxConcurrentRequests = 0
+  await Promise.all(Array.from({ length: Math.min(concurrency, active.length) }, async () => {
+    while (cursor < active.length) {
+      const index = cursor++
+      const queueMs = performance.now() - queuedAt
+      maxConcurrentRequests = Math.max(maxConcurrentRequests, ++inFlight)
+      try {
+        decisions[index] = { ...await requestStep(baseUrl, apiKey, active[index], prepared.turn, fetchImpl), queueMs }
+      } finally { inFlight -= 1 }
+      onProgress(++completed, active.length)
+    }
   }))
   const state = await jsonRequest(baseUrl, '/estado/avanzar', apiKey,
     { phase: 'RESOLVE', turnToken: prepared.turnToken, decisions, turnDurationMs: performance.now() - started }, fetchImpl)
-  return { state, decisions, durationMs: performance.now() - started }
+  return { state, decisions, maxConcurrentRequests, durationMs: performance.now() - started }
 }

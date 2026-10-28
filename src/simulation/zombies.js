@@ -1,7 +1,9 @@
 const { buildAdjacency, stableHash } = require('../domain/graph')
+const HORDE_MOVE_EVERY_TURNS = 5
 
 function moveZombie(zombie, survivors, adjacency, turn, movements) {
-  if (zombie.asleep || zombie.type === 'HORDE' || (zombie.type === 'WALKER' && turn % 2 !== 0)) return zombie
+  if (zombie.asleep || (zombie.type === 'HORDE' && (turn < 1 || turn % HORDE_MOVE_EVERY_TURNS !== 0))
+    || (zombie.type === 'WALKER' && turn % 2 !== 0)) return zombie
   for (let step = 0; step < (zombie.type === 'RUNNER' ? 2 : 1); step += 1) {
     const edges = adjacency.get(zombie.nodeId) || []
     if (!edges.length) break
@@ -56,4 +58,4 @@ function predictRunners(map, state) {
   })
 }
 
-module.exports = { dangerNodes, moveZombie, predictRunners }
+module.exports = { dangerNodes, moveZombie, predictRunners, HORDE_MOVE_EVERY_TURNS }
