@@ -34,7 +34,15 @@ Este comando tiene cargos: prepara gradualmente hasta 200 entornos de 1 GB, ejec
 
 ## Comparacion regional
 
-Ejecutar el mismo repositorio actualizado en AWS CloudShell con la region us-east-1 seleccionada, Node >=22 y npm ci. Configurar la clave sin mostrarla ni guardarla en el historial:
+Para abrir desde PowerShell una ventana regional con capacidad preparada y sin copiar la clave al equipo que despliega:
+
+```powershell
+./scripts/regional-prepared-window.ps1 -WindowSeconds 300
+```
+
+Conserva el hash vigente mediante el helper de produccion, valida el paquete y prepara 50/100/150/200 entornos por etapas. Cada etapa revisa el diff. Solo anuncia REGIONAL_READY despues de confirmar por HTTP el alias prepared y el tipo provisioned-concurrency. Desde ese momento hay cinco minutos para ejecutar el ensayo en CloudShell; despues intenta retirar la capacidad mediante CDK, incluso si falla la prueba o no se ejecuta. No cerrar ni interrumpir el proceso. Un fallo del proceso o de AWS puede impedir la retirada: revisar cleanupDeploymentSucceeded en reports/http/regional-prepared-cleanup-latest.json. Tambien se puede solicitar retirada anticipada creando el archivo tmp/regional-prepared-stop. La ventana y las etapas de preparacion generan cargos temporales de Lambda.
+
+Ejecutar el mismo repositorio actualizado en AWS CloudShell con la region us-east-1 seleccionada y Node >=20. Los scripts de medicion usan modulos nativos y no necesitan npm ci. Antes de activar capacidad pagada, comprobar la carpeta con `cd ~/Refugio593-latencia` y `ls scripts/run-http-fire-drill.mjs`. Configurar la clave sin mostrarla ni guardarla en el historial; ejecutar primero la linea read, introducir la clave y despues las demas lineas:
 
 ```bash
 read -r -s -p 'Clave de control: ' SIMULATOR_API_KEY; echo

@@ -1,0 +1,12 @@
+{
+  "memoryMb": 1024,
+  "regionalWindowSeconds": 300,
+  "startedAt": "2026-10-28T14:47:21.490245-05:00",
+  "measurement": "User CloudShell terminal; report pending",
+  "cleanupDeploymentSucceeded": true,
+  "activationAttempted": true,
+  "finishedAt": "2026-10-28T15:26:46.9311461-05:00",
+  "capacityCount": 200,
+  "measurementOutcome": "NOT_STARTED",
+  "blocker": "CloudShell command ran from home directory instead of repository; MODULE_NOT_FOUND"
+}
