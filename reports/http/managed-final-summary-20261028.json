@@ -1,0 +1,34 @@
+{
+  "generatedAt": "2026-10-28T22:07:33.771Z",
+  "runId": "20261028T220004Z-1",
+  "stage": "preparing",
+  "exitStatus": 2,
+  "measurementLocation": "AWS-CodeBuild-us-east-1-general1.small",
+  "protocol": "Round 3, 200 survivors, 12 accelerated turns, full concurrency, HTTP/2 two connections. Partial diagnostic.",
+  "excludesFirstRequests": false,
+  "baseline": {
+    "generatedAt": "2026-10-28T22:00:28.998Z",
+    "calls": 1943,
+    "p95HttpMs": 500.19,
+    "p95HandlerMs": 13.13,
+    "errors": 0,
+    "timeouts": 173,
+    "invalidMoves": 0,
+    "initializationTypes": [
+      "on-demand"
+    ],
+    "qualifiers": [
+      "prepared"
+    ],
+    "failure": null,
+    "latencyBandScore": 0,
+    "availabilityBandScore": 0
+  },
+  "prepared": null,
+  "preparedVerified": false,
+  "cleanupSucceeded": true,
+  "selectedMeasurement": "baseline",
+  "p95HttpMs": 500.19,
+  "meets150Ms": false,
+  "limitation": "Regional measurement; does not certify Ecuador latency or the full three-round competition protocol."
+}

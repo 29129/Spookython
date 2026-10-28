@@ -2,6 +2,12 @@
 
 El objetivo es p95 HTTP de POST /paso <=150 ms con 200 sobrevivientes simultaneos. El limite funcional sigue siendo 500 ms. No basta medir el algoritmo ni GET /health.
 
+## Cierre de la ultima prueba: 28 de octubre de 2026
+
+La ultima ejecucion se inicio desde Windows local, sin CloudShell, y corrio en CodeBuild us-east-1. La referencia bajo demanda midio 1.943 solicitudes: p95 HTTP 500,19 ms, p95 del handler 13,13 ms, cero errores, 173 tiempos fuera de plazo y cero movimientos invalidos. La preparacion de capacidad termino sin completarse dentro del plazo; no existe una medicion preparada valida. El objetivo de 150 ms no esta acreditado.
+
+El reporte confirma `cleanupSucceeded: true`. Evidencia: [resumen final](../reports/http/managed-final-summary-20261028.json). Es un diagnostico parcial de 12 turnos de la ronda 3, incluyendo las primeras solicitudes; no equivale a la prueba oficial completa ni acredita latencia desde Ecuador. Se cierra esta iteracion conservando las cifras reales. Los procedimientos anteriores que siguen abajo quedan como historial, no como instrucciones para repetir la prueba.
+
 ## Cambios
 
 - PREPARE publica las decisiones en 16 registros independientes, distribuidos por clave de particion. Una transaccion de 17 escrituras actualiza STATE y los 16 grupos de forma atomica, con condicion sobre turno, revision y sesion del estado anterior.

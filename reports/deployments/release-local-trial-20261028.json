@@ -8,7 +8,11 @@
   "unauthenticatedStartStatus": 401,
   "health": "ok",
   "activation": "local Windows secure prompt; no CloudShell",
-  "measurement": "STARTED_IN_AWS",
-  "provisionedCapacityRequested": "managed by the job; pending final cleanup evidence",
-  "buildId": "refugio593-latency-final:dc2408e2-552c-4d08-89fb-9e88be8edfcd"
+  "measurement": "COMPLETED_BASELINE_ONLY_PREPARATION_DEADLINE",
+  "provisionedCapacityRequested": "removed; cleanupSucceeded=true",
+  "buildId": "refugio593-latency-final:dc2408e2-552c-4d08-89fb-9e88be8edfcd",
+  "diagnosticStackDestroyed": true,
+  "finalP95HttpMs": 500.19,
+  "meets150Ms": false,
+  "closedAt": "2026-10-28T22:11:17.7898437Z"
 }
