@@ -1,0 +1,73 @@
+{
+  "generatedAt": "2026-10-28T14:50:58.009Z",
+  "measurementLocation": "client-unspecified",
+  "protocol": "A-B-B-A; round 3, 200 survivors, 12 turns, full concurrency, HTTP/2 two connections; partial diagnostic",
+  "excludesColdStarts": false,
+  "results": [
+    {
+      "endpoint": "https://gkzb014d54.execute-api.us-east-1.amazonaws.com",
+      "diagnosticExitCode": 1,
+      "generatedAt": "2026-10-28T14:50:14.566Z",
+      "calls": 1946,
+      "p95HttpMs": 517.72,
+      "p95HandlerMs": 24.69,
+      "errors": 1,
+      "timeouts": 193,
+      "invalidMoves": 0,
+      "initializationTypes": [
+        "on-demand"
+      ],
+      "failure": null,
+      "meets150Ms": false
+    },
+    {
+      "endpoint": "https://d2qqi0nkfeyck5.cloudfront.net/api",
+      "diagnosticExitCode": 1,
+      "generatedAt": "2026-10-28T14:50:29.066Z",
+      "calls": 1823,
+      "p95HttpMs": 326.7,
+      "p95HandlerMs": 12.66,
+      "errors": 2,
+      "timeouts": 14,
+      "invalidMoves": 0,
+      "initializationTypes": [
+        "on-demand"
+      ],
+      "failure": null,
+      "meets150Ms": false
+    },
+    {
+      "endpoint": "https://d2qqi0nkfeyck5.cloudfront.net/api",
+      "diagnosticExitCode": 1,
+      "generatedAt": "2026-10-28T14:50:42.808Z",
+      "calls": 1835,
+      "p95HttpMs": 383.81,
+      "p95HandlerMs": 8.39,
+      "errors": 2,
+      "timeouts": 14,
+      "invalidMoves": 0,
+      "initializationTypes": [
+        "on-demand"
+      ],
+      "failure": null,
+      "meets150Ms": false
+    },
+    {
+      "endpoint": "https://gkzb014d54.execute-api.us-east-1.amazonaws.com",
+      "diagnosticExitCode": 1,
+      "generatedAt": "2026-10-28T14:50:57.817Z",
+      "calls": 1819,
+      "p95HttpMs": 288.69,
+      "p95HandlerMs": 13.75,
+      "errors": 4,
+      "timeouts": 12,
+      "invalidMoves": 0,
+      "initializationTypes": [
+        "on-demand"
+      ],
+      "failure": null,
+      "meets150Ms": false
+    }
+  ],
+  "allEdgeSamplesMeet150Ms": false
+}
