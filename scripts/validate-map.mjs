@@ -3,13 +3,16 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-const mapPath = path.join(root, 'src/data/manta.graph.json')
+const options = Object.fromEntries(process.argv.slice(2).map((argument) => argument.replace(/^--/, '').split('=')))
+const mapPath = path.resolve(root, options.map || 'src/data/manta.graph.json')
+const expectedNodes = Number(options.nodes || 600)
+if (!Number.isInteger(expectedNodes) || expectedNodes < 4) throw new Error('--nodes debe ser un entero mayor o igual a 4.')
 if (!fs.existsSync(mapPath)) throw new Error('No existe src/data/manta.graph.json. Ejecuta npm run map:build.')
 const map = JSON.parse(fs.readFileSync(mapPath, 'utf8'))
 const fail = (message) => { throw new Error(`Mapa inválido: ${message}`) }
 
 if (map.schemaVersion !== 1) fail('schemaVersion debe ser 1.')
-if (!Array.isArray(map.nodes) || map.nodes.length !== 300) fail(`se esperaban 300 intersecciones y hay ${map.nodes?.length ?? 0}.`)
+if (!Array.isArray(map.nodes) || map.nodes.length !== expectedNodes) fail(`se esperaban ${expectedNodes} intersecciones y hay ${map.nodes?.length ?? 0}.`)
 if (!Array.isArray(map.streets) || map.streets.length === 0) fail('se requiere al menos una calle.')
 if (!Array.isArray(map.refuges) || map.refuges.length !== 4) fail(`se esperaban 4 refugios y hay ${map.refuges?.length ?? 0}.`)
 if (map.metadata?.source !== 'OpenStreetMap' || map.metadata?.license !== 'ODbL-1.0') fail('faltan la fuente y la licencia OSM.')

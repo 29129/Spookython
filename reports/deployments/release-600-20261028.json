@@ -1,0 +1,57 @@
+{
+  "verifiedAt": "2026-10-28T06:43:44.316Z",
+  "release": "refugio-600-20261028",
+  "nodes": 600,
+  "streets": 868,
+  "refuges": 4,
+  "publicAssets": [
+    {
+      "url": "https://gkzb014d54.execute-api.us-east-1.amazonaws.com/health",
+      "status": 200,
+      "contentType": "application/json; charset=utf-8"
+    },
+    {
+      "url": "https://gkzb014d54.execute-api.us-east-1.amazonaws.com/map",
+      "status": 200,
+      "contentType": "application/json; charset=utf-8"
+    },
+    {
+      "url": "https://gkzb014d54.execute-api.us-east-1.amazonaws.com/estado",
+      "status": 200,
+      "contentType": "application/json; charset=utf-8"
+    },
+    {
+      "url": "https://d2qqi0nkfeyck5.cloudfront.net/",
+      "status": 200,
+      "contentType": "text/html"
+    },
+    {
+      "url": "https://d2qqi0nkfeyck5.cloudfront.net/app.js",
+      "status": 200,
+      "contentType": "text/javascript"
+    },
+    {
+      "url": "https://d2qqi0nkfeyck5.cloudfront.net/geographic-map.mjs",
+      "status": 200,
+      "contentType": "text/javascript"
+    },
+    {
+      "url": "https://d2qqi0nkfeyck5.cloudfront.net/vendor/maplibre-gl.mjs",
+      "status": 200,
+      "contentType": "text/javascript"
+    },
+    {
+      "url": "https://d2qqi0nkfeyck5.cloudfront.net/vendor/maplibre-gl-worker.mjs",
+      "status": 200,
+      "contentType": "text/javascript"
+    },
+    {
+      "url": "https://d2qqi0nkfeyck5.cloudfront.net/styles.css",
+      "status": 200,
+      "contentType": "text/css"
+    }
+  ],
+  "worldRequiresNewRound": true,
+  "provisionedConcurrency": 0,
+  "notes": "Verificación HTTP de recursos públicos; no es una prueba completa de carga ni una revisión visual. Iniciar una ronda nueva con la clave vigente."
+}

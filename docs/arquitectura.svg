@@ -29,5 +29,8 @@
   <path class="edge" d="M570 350H685"/><text class="label" x="580" y="333">integración Lambda</text>
   <path class="edge" d="M915 350H990"/><text class="label" x="921" y="333">GetItem / PutItem</text>
   <path class="edge dashed" d="M805 410V480"/><text class="label" x="818" y="455">alertas de costo</text>
-  <text class="sub" x="55" y="590">El grafo de Manta se empaqueta en el código de Lambda; no se descarga en cada turno.</text>
+  <rect class="box" x="55" y="425" width="220" height="100"/>
+  <text class="title" x="75" y="464">OpenFreeMap</text><text class="sub" x="75" y="493">Fondo externo · MapLibre</text>
+  <path class="edge dashed" d="M155 245V415"/><text class="label" x="63" y="393">teselas / fuentes</text>
+  <text class="sub" x="55" y="590">Grafo operativo de 600 nodos empaquetado en Lambda; el fondo geográfico se carga en el navegador.</text>
 </svg>

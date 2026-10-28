@@ -4,9 +4,11 @@ import { fileURLToPath } from 'node:url'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const inputPath = path.join(root, 'data/manta.osm.json')
-const outputPath = path.join(root, 'src/data/manta.graph.json')
+const options = Object.fromEntries(process.argv.slice(2).map((argument) => argument.replace(/^--/, '').split('=')))
+const outputPath = path.resolve(root, options.output || 'src/data/manta.graph.json')
 const center = { lat: -0.96212, lng: -80.71271 }
-const selectedNodeCount = 300
+const selectedNodeCount = Number(options.nodes || 600)
+if (!Number.isInteger(selectedNodeCount) || selectedNodeCount < 4) throw new Error('--nodes debe ser un entero mayor o igual a 4.')
 const box = { south: -0.98, west: -80.735, north: -0.945, east: -80.69 }
 const roadClasses = new Set([
   'primary', 'primary_link', 'trunk', 'trunk_link', 'secondary', 'secondary_link',
@@ -177,6 +179,7 @@ const graph = {
     boundingBox: box,
     nodeCount: nodes.length,
     streetCount: streets.length,
+    selection: { method: 'connected-breadth-first', requestedNodeCount: selectedNodeCount },
     speedAssumptionsMps: walkingSpeedMps,
   },
   nodes,

@@ -1,5 +1,6 @@
 import { advanceHttpTurn } from './simulator-client.mjs'
 import { createMapProjection } from './map-projection.mjs'
+import { createGeographicMap } from './geographic-map.mjs'
 import { avatarSprite, hydrateAvatarLegends } from './map-avatars.mjs'
 
 hydrateAvatarLegends()
@@ -9,8 +10,6 @@ const REFRESH_INTERVAL_MS = 2000
 const SVG_NS = 'http://www.w3.org/2000/svg'
 
 const elements = {
-  connection: document.querySelector('#connection'),
-  connectionText: document.querySelector('#connectionText'),
   turnNumber: document.querySelector('#turnNumber'),
   activeCount: document.querySelector('#activeCount'),
   rescuedCount: document.querySelector('#rescuedCount'),
@@ -18,7 +17,6 @@ const elements = {
   zombieCount: document.querySelector('#zombieCount'),
   blockedCount: document.querySelector('#blockedCount'),
   lastEvent: document.querySelector('#lastEvent'),
-  mapUpdated: document.querySelector('#mapUpdated'),
   mapMessage: document.querySelector('#mapMessage'),
   streetLayer: document.querySelector('#streetLayer'),
   routeLayer: document.querySelector('#routeLayer'),
@@ -47,12 +45,14 @@ const elements = {
   refugeStatus: document.querySelector('#refugeStatus'),
   vehicleStatus: document.querySelector('#vehicleStatus'),
   httpMetrics: document.querySelector('#httpMetrics'),
-  roundBadge: document.querySelector('#roundBadge'),
   rescuePercent: document.querySelector('#rescuePercent'),
   rescueProgress: document.querySelector('#rescueProgress'),
   rescueCaption: document.querySelector('#rescueCaption'),
 }
 
+let geographicMap = null
+let selectedSurvivorId = null
+let controlsInitialized = false
 let mapData = null
 let worldState = null
 let isRunning = false
@@ -68,9 +68,8 @@ function svgElement(name, attributes = {}) {
   return element
 }
 
-function setConnection(state, message) {
-  elements.connection.dataset.state = state
-  elements.connectionText.textContent = message
+function setConnection(state) {
+  document.body.dataset.connection = state
 }
 
 function showError(message) {
@@ -100,7 +99,7 @@ function makeProjection(map) {
   const width = Math.max(1, svg.clientWidth)
   const height = Math.max(1, svg.clientHeight)
   svg.setAttribute('viewBox', `0 0 ${width} ${height}`)
-  return createMapProjection(map, width, height)
+  return geographicMap ? geographicMap.project : createMapProjection(map, width, height)
 }
 
 function typeClass(type) {
@@ -126,7 +125,6 @@ function drawStreets(project, blockedStreetIds) {
       title.textContent = `${street.name || street.type} cerrada: arista retirada de la red transitable`
       marker.append(title)
       elements.streetLayer.append(marker)
-      continue
     }
     const path = svgElement('polyline', {
       class: `street ${typeClass(street.type)}${blocked.has(street.id) ? ' blocked' : ''}`,
@@ -160,12 +158,14 @@ function drawRoutes(project, state, blockedStreetIds) {
       const from = mapData.nodesById.get(fromId)
       const to = mapData.nodesById.get(toId)
       if (!street || blocked.has(street.id) || !from || !to) continue
-      const start = project([from.lng, from.lat])
-      const end = project([to.lng, to.lat])
-      points.push(`${index === 0 ? 'M' : 'L'}${start.x.toFixed(1)},${start.y.toFixed(1)} L${end.x.toFixed(1)},${end.y.toFixed(1)}`)
+      const geometry = street.fromNode === fromId ? street.geometry : [...street.geometry].reverse()
+      points.push(geometry.map((coordinate, position) => {
+        const point = project(coordinate)
+        return `${position === 0 ? 'M' : 'L'}${point.x.toFixed(1)},${point.y.toFixed(1)}`
+      }).join(' '))
     }
     if (points.length) {
-      const route = svgElement('path', { class: survivor.rescueVehicle ? 'route-line vehicle-route' : 'route-line', d: points.join(' ') })
+      const route = svgElement('path', { class: survivor.rescueVehicle ? 'route-line vehicle-route' : `route-line${survivor.id === selectedSurvivorId ? ' selected-route' : ''}`, d: points.join(' ') })
       const title = svgElement('title')
       title.textContent = `Ruta ${survivor.rescueVehicle ? 'de rescate' : 'planificada'} · ${survivor.id}`
       route.append(title)
@@ -179,9 +179,9 @@ function drawRefuges(project, state) {
   for (const [index, refuge] of mapData.refuges.entries()) {
     const point = project([refuge.lng, refuge.lat])
     const marker = svgElement('g', { transform: `translate(${point.x} ${point.y})` })
-    marker.append(svgElement('circle', { class: 'refuge-ring', r: 11 }))
-    marker.append(avatarSprite('refuge', 28))
-    const label = svgElement('text', { class: 'refuge-label', x: 0, y: 17 })
+    marker.append(svgElement('rect', { class: 'refuge-ring', x: -21, y: -24, width: 42, height: 34, rx: 7 }))
+    marker.append(avatarSprite('refuge', 25))
+    const label = svgElement('text', { class: 'refuge-label', x: 0, y: 23 })
     label.textContent = `R${index + 1}`
     marker.append(label)
     const title = svgElement('title')
@@ -195,11 +195,18 @@ function drawRefuges(project, state) {
 function drawEntities(project, state) {
   elements.entityLayer.replaceChildren()
   for (const survivor of state.survivors) {
-    if (survivor.status === 'ONBOARD') continue
+    if (survivor.status !== 'ACTIVE') continue
     const node = mapData.nodesById.get(survivor.nodeId)
     if (!node) continue
     const point = project([node.lng, node.lat])
     const marker = svgElement('g', { transform: `translate(${point.x} ${point.y})` })
+    marker.setAttribute('class', `entity-interactive${survivor.id === selectedSurvivorId ? ' entity-selected' : ''}`)
+    marker.setAttribute('tabindex', '0')
+    marker.setAttribute('role', 'button')
+    marker.setAttribute('aria-label', `Ver ruta de ${survivor.id}`)
+    marker.append(svgElement('circle', { r: 13, fill: 'transparent' }))
+    marker.addEventListener('click', () => selectSurvivor(survivor.id))
+    marker.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectSurvivor(survivor.id) } })
     const statusClass = survivor.status === 'BITTEN' ? 'survivor-bitten' : survivor.status === 'RESCUED' ? 'survivor-rescued' : 'survivor-mark'
     if (survivor.status === 'ACTIVE') marker.append(svgElement('circle', { class: 'entity-halo', r: 7.5 }))
     marker.append(svgElement('circle', { class: statusClass, r: survivor.status === 'ACTIVE' ? 3.3 : 3.8 }))
@@ -277,16 +284,54 @@ function describeEvent(event) {
   elements.lastEvent.textContent = label
 }
 
+function drawMap(state) {
+  const project = makeProjection(mapData)
+  const blocked = state.blockedStreetIds || []
+  drawStreets(project, blocked)
+  drawRoutes(project, state, blocked)
+  drawRefuges(project, state)
+  drawEntities(project, state)
+  updateSelection(project)
+  return project
+}
+function selectSurvivor(id) {
+  selectedSurvivorId = id
+  if (worldState) drawMap(worldState)
+}
+function updateSelection(project) {
+  const card = document.querySelector('#selectionCard')
+  const person = worldState?.survivors.find(item => item.id === selectedSurvivorId)
+  card.hidden = !person
+  if (!person) return
+  const destination = mapData.refuges.find(item => item.nodeId === person.routeNodeIds?.at(-1))
+  const index = destination ? mapData.refuges.indexOf(destination) + 1 : null
+  document.querySelector('#selectionTitle').textContent = `${person.id} · ${index ? `Hacia R${index}` : person.status === 'RESCUED' ? 'A salvo' : 'Buscando refugio'}`
+  document.querySelector('#selectionDescription').textContent = person.status === 'ACTIVE'
+    ? `${Math.max(0, (person.routeNodeIds?.length || 1) - 1)} pasos planificados · Ruta revisada cada turno`
+    : person.status === 'RESCUED' ? 'Llegó al refugio.' : person.status === 'ONBOARD' ? 'A bordo de una camioneta.' : 'Fuera de la evacuación.'
+  const node = mapData.nodesById.get(person.nodeId)
+  if (node) {
+    const position = project([node.lng, node.lat])
+    const frame = document.querySelector('#mapFrame')
+    card.style.left = `${Math.max(12, Math.min(position.x + 18, frame.clientWidth - (window.innerWidth > 900 ? 620 : 245)))}px`
+    card.style.top = `${Math.max(115, Math.min(position.y - 65, frame.clientHeight - 150))}px`
+  }
+}
+document.querySelector('#closeSelection').addEventListener('click', () => { selectedSurvivorId = null; if (worldState) drawMap(worldState) })
+document.querySelector('#toggleNetwork').addEventListener('click', event => {
+  const hidden = document.querySelector('#mapFrame').classList.toggle('network-hidden')
+  event.currentTarget.setAttribute('aria-pressed', String(!hidden))
+})
+const helpDialog = document.querySelector('#helpDialog')
+document.querySelector('#helpButton').addEventListener('click', () => helpDialog.showModal())
+document.querySelector('#closeHelp').addEventListener('click', () => helpDialog.close())
+helpDialog.addEventListener('click', event => { if (event.target === helpDialog) { const box = helpDialog.getBoundingClientRect(); if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) helpDialog.close() } })
+
 function render(state) {
   if (!mapData || !state) return
   if (worldState?.revision !== undefined && state.revision !== undefined && state.revision < worldState.revision) return
   worldState = state
-  const project = makeProjection(mapData)
-  const blockedStreetIds = state.blockedStreetIds || []
-  drawStreets(project, blockedStreetIds)
-  drawRoutes(project, state, blockedStreetIds)
-  drawRefuges(project, state)
-  drawEntities(project, state)
+  const project = drawMap(state)
 
   elements.turnNumber.textContent = String(state.turn).padStart(2, '0')
   elements.activeCount.textContent = state.summary.activeSurvivors
@@ -299,13 +344,34 @@ function render(state) {
   elements.rescuePercent.textContent = `${rescuedPercent}%`
   elements.rescueProgress.value = rescuedPercent
   elements.rescueCaption.textContent = `${state.summary.rescuedSurvivors} de ${total} personas llegaron a un refugio${state.roundFinished ? ' · Ronda finalizada' : ''}.`
-  elements.roundBadge.textContent = `Ronda ${state.round || 1} · ${state.pro ? 'Rescate Pro' : 'Rescate base'} · ${state.runnerContactBites ? 'Mordida al pasar' : 'Reglas del reto'}`
-  elements.mapUpdated.textContent = `Actualizado ${new Date(state.updatedAt).toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`
   elements.mapMessage.hidden = true
   elements.nodeCount.textContent = mapData.nodes.length
   elements.refugeCount.textContent = mapData.refuges.length
   elements.sourceStamp.textContent = `OpenStreetMap contributors · ${mapData.metadata.sourceTimestamp.slice(0, 10)}`
   describeEvent(state.lastEvent)
+  const occupancyList = document.querySelector('#refugeOccupancy')
+  occupancyList.replaceChildren()
+  for (const [index, refuge] of mapData.refuges.entries()) {
+    const occupancy = state.refuges?.find(item => item.id === refuge.id)
+    const occupied = occupancy?.occupied ?? state.survivors.filter(person => person.status === 'RESCUED' && person.nodeId === refuge.nodeId).length
+    const capacity = occupancy?.capacity
+    const row = document.createElement('div')
+    row.className = 'occupancy-row'
+    const label = document.createElement('strong'); label.textContent = `R${index + 1}`
+    const track = document.createElement('div'); track.className = 'occupancy-track'
+    const fill = document.createElement('div'); fill.className = 'occupancy-fill'
+    fill.style.width = `${Math.min(100, capacity > 0 ? occupied / capacity * 100 : occupied / Math.max(1, total) * 100)}%`
+    track.append(fill)
+    const value = document.createElement('span'); value.textContent = `${occupied} / ${capacity ?? '∞'}`
+    row.append(label, track, value); occupancyList.append(row)
+  }
+  updateSelection(project)
+  if (!controlsInitialized) {
+    controlsInitialized = true
+    elements.roundSelect.querySelector(`input[value="${state.round || 1}"]`).checked = true
+    elements.proMode.checked = Boolean(state.pro)
+    elements.refugeCapacity.disabled = !state.pro
+  }
   elements.proPanel.hidden = !state.pro
   elements.refugeStatus.replaceChildren()
   for (const refuge of state.refuges || []) {
@@ -316,17 +382,19 @@ function render(state) {
   elements.vehicleStatus.textContent = `${state.vehicles?.length || 0} camionetas · ${state.summary.onboardSurvivors || 0} pasajeros a bordo`
   const metrics = state.metrics
   elements.httpMetrics.textContent = metrics ? `${metrics.requests} consultas · ${metrics.timeouts} fuera de tiempo · ${metrics.errors} errores · ${metrics.invalidMoves} inválidos. Último turno observado: ${Math.round(lastHttpTurnMs)} ms · ${observedSlowTurns} turnos >2 s en esta pestaña.` : 'Inicia una ronda nueva para medir las consultas HTTP.'
-  setConnection('online', 'Conectado · actualización cada 2 s')
+  setConnection('online', 'Conectado · cada 2 s')
 }
 
 async function loadMap() {
   mapData = await fetchJson('/map')
   mapData.nodesById = new Map(mapData.nodes.map((node) => [node.id, node]))
+  geographicMap = createGeographicMap(mapData, () => { if (worldState) drawMap(worldState) })
   drawStreets(makeProjection(mapData), [])
   drawRefuges(makeProjection(mapData))
 }
 
 new ResizeObserver(() => {
+  geographicMap?.resize()
   if (mapData && worldState) render(worldState)
 }).observe(elements.streetLayer.ownerSVGElement)
 

@@ -13,12 +13,16 @@
     "map:build": "node scripts/build-map.mjs",
     "map:validate": "node scripts/validate-map.mjs",
     "synth": "cdk synth --strict",
-    "diff": "cdk diff"
+    "diff": "cdk diff",
+    "map:build:local": "node scripts/build-map.mjs --nodes=600 --output=data/manta.graph.local-600.json",
+    "map:validate:local": "node scripts/validate-map.mjs --nodes=600 --map=data/manta.graph.local-600.json",
+    "fire-drill:local-map": "node scripts/run-fire-drill.mjs --map=data/manta.graph.local-600.json"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",
     "aws-cdk": "2.1146.1",
     "esbuild": "^0.25.11",
+    "maplibre-gl": "^6.16.0",
     "tsx": "^4.23.0",
     "typescript": "npm:@typescript/typescript6@^6.0.2"
   },

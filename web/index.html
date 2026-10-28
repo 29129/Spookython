@@ -1,103 +1,60 @@
 <!doctype html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#080d19" />
-    <meta name="description" content="Simulación de rutas de supervivencia en Manta, Ecuador." />
-    <title>Refugio 593 | Manta en vivo</title>
-    <link rel="stylesheet" href="/styles.css" />
-    <script src="/app.js" type="module"></script>
-  </head>
-  <body>
-    <main class="shell">
-      <header class="topbar">
-        <a class="brand" href="/" aria-label="Refugio 593, inicio">
-          <span class="brand-mark" aria-hidden="true">R<span>+</span></span>
-          <span><strong>REFUGIO 593</strong><small>CENTRO DE EVACUACIÓN</small></span>
-        </a>
-        <div class="connection" id="connection" data-state="loading">
-          <span class="connection-dot"></span>
-          <span id="connectionText">Conectando con la simulación</span>
-        </div>
-      </header>
-
-      <section class="intro">
-        <div>
-          <p class="eyebrow"><span class="location-mark" aria-hidden="true">◎</span> MANTA, ECUADOR · OPERACIÓN DE RESCATE</p>
-          <h1>Cada ruta <span>cuenta.</span></h1>
-          <p class="intro-copy">Una ciudad en riesgo. Encuentra el camino a un lugar seguro.</p>
-        </div>
-        <div class="turn-chip"><span>TURNO</span><strong id="turnNumber">--</strong></div>
-      </section>
-
-      <section class="metrics" aria-label="Resumen de la simulación">
-        <article class="metric"><span class="metric-label">Sobrevivientes activos</span><strong class="metric-value" id="activeCount">--</strong><span class="metric-note">En movimiento</span></article>
-        <article class="metric"><span class="metric-label">Rescatados</span><strong class="metric-value safe" id="rescuedCount">--</strong><span class="metric-note">Llegaron a refugio</span></article>
-        <article class="metric"><span class="metric-label">Mordidos</span><strong class="metric-value danger" id="bittenCount">--</strong><span class="metric-note">Fuera de la evacuación</span></article>
-        <article class="metric"><span class="metric-label">Zombis visibles</span><strong class="metric-value warning" id="zombieCount">--</strong><span class="metric-note">Los dormidos no aparecen</span></article>
-        <article class="metric"><span class="metric-label">Calles bloqueadas</span><strong class="metric-value" id="blockedCount">--</strong><span class="metric-note" id="lastEvent">Sin incidentes nuevos</span></article>
-      </section>
-
-      <section class="workspace">
-        <article class="map-card">
-          <div class="card-heading">
-            <div><p class="eyebrow">01 / MAPA OPERATIVO</p><h2>El rescate, en vivo</h2></div>
-            <div class="map-meta"><span class="live-pulse"></span><span id="mapUpdated">Esperando datos</span></div>
-          </div>
-          <div class="map-toolbar"><span id="roundBadge">Esperando ronda</span><span>300 intersecciones · 4 refugios</span></div>
-          <div class="map-frame" id="mapFrame">
-            <svg id="mapSvg" viewBox="0 0 1000 700" role="img" aria-label="Mapa de calles, refugios, sobrevivientes y zombis de Manta">
-              <defs>
-                <pattern id="grid" width="36" height="36" patternUnits="userSpaceOnUse">
-                  <path d="M 36 0 L 0 0 0 36" fill="none" stroke="#182235" stroke-width="1" />
-                </pattern>
-                <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
-                  <feGaussianBlur stdDeviation="3.5" result="blur" />
-                  <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
-                </filter>
-              </defs>
-              <rect width="100%" height="100%" fill="url(#grid)" />
-              <g id="streetLayer"></g>
-              <g id="routeLayer"></g>
-              <g id="refugeLayer"></g>
-              <g id="entityLayer"></g>
-            </svg>
-            <div class="map-overlay" id="mapMessage">Cargando el mapa de Manta…</div>
-            <div class="north-mark" aria-hidden="true"><span>N</span><i></i></div>
-            <div class="map-caption" aria-hidden="true">MANTA <span>RED DE EVACUACIÓN</span></div>
-          </div>
-          <div class="legend" aria-label="Leyenda del mapa">
-            <span><i class="legend-line avenue"></i>Avenida</span>
-            <span><i class="legend-line street"></i>Calle</span>
-            <span><i class="legend-avatar" data-avatar="blocked"></i>Bloqueada</span>
-            <span><i class="legend-avatar" data-avatar="survivor"></i>Sobreviviente</span>
-            <span><i class="legend-avatar" data-avatar="walker"></i>Caminante</span>
-            <span><i class="legend-avatar" data-avatar="runner"></i>Corredor</span>
-            <span><i class="legend-avatar" data-avatar="horde"></i>Horda</span>
-            <span><i class="legend-avatar" data-avatar="refuge"></i>Refugio</span>
-            <span><i class="legend-avatar" data-avatar="truck"></i>Camioneta Pro</span>
-            <span><i class="legend-prediction"></i>Predicción Pro</span>
-          </div>
-          <p class="attribution">Calles de OpenStreetMap · Los refugios son ubicaciones de demostración, no refugios oficiales.</p>
-          <a class="avatar-gallery-link" href="/avatars.html">Ver los avatares →</a>
-        </article>
-
-        <aside class="side-column">
-          <article class="control-card">
-            <p class="eyebrow">02 / CENTRO DE CONTROL</p>
-            <h2 id="simulationTitle">Modo espectador</h2>
-            <p class="control-copy" id="simulationHelp">El mapa se actualiza automáticamente. Ingresa la clave de control para iniciar o avanzar turnos.</p>
-            <label class="field-label" for="apiKey">Clave de control</label>
-            <input id="apiKey" type="password" autocomplete="off" spellcheck="false" placeholder="Ingresa tu clave para controlar" />
-            <fieldset class="round-picker" id="roundSelect">
-              <legend class="field-label">Elige la ronda</legend>
-              <label class="round-option"><input type="radio" name="round" value="1" checked /><span><strong>Anochecer</strong><small>Caminantes</small></span><span class="round-count">20<small>personas</small></span></label>
-              <label class="round-option"><input type="radio" name="round" value="2" /><span><strong>Medianoche</strong><small>Corredores, horda y puente colapsado</small></span><span class="round-count">80<small>personas</small></span></label>
-              <label class="round-option"><input type="radio" name="round" value="3" /><span><strong>Apocalipsis</strong><small>Todos los tipos · dos calles bloqueadas</small></span><span class="round-count">200<small>personas</small></span></label>
-            </fieldset>
-            <label class="pro-toggle"><input id="proMode" type="checkbox" /><span>Rescate Pro<small>Predicción, cupos y 5 camionetas</small></span><span class="pro-tag">PRO</span></label>
-            <details class="advanced-settings"><summary>Ajustes de la ronda</summary>
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0b141b" /><meta name="description" content="Refugio 593: centro de evacuación en vivo en Manta, Ecuador." />
+  <title>Refugio 593 | Centro de evacuación</title>
+  <link rel="stylesheet" href="/vendor/maplibre-gl.css" /><link rel="stylesheet" href="/styles.css" />
+  <script src="/app.js" type="module"></script>
+</head>
+<body>
+<main class="shell">
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Refugio 593, inicio"><span class="brand-mark" aria-hidden="true">R<span>+</span></span><span><strong>REFUGIO 593</strong><small>CENTRO DE EVACUACIÓN</small></span></a>
+    <div class="turn-chip"><span>TURNO</span><strong id="turnNumber">--</strong></div>
+    <section class="metrics" aria-label="Resumen de la simulación">
+      <article class="metric"><i class="legend-avatar" data-avatar="survivor"></i><span class="metric-label">Activos</span><strong class="metric-value" id="activeCount">--</strong></article>
+      <article class="metric"><i class="legend-avatar" data-avatar="refuge"></i><span class="metric-label">Rescatados</span><strong class="metric-value safe" id="rescuedCount">--</strong></article>
+      <article class="metric"><i class="legend-avatar" data-avatar="walker"></i><span class="metric-label">Mordidos</span><strong class="metric-value danger" id="bittenCount">--</strong></article>
+      <article class="metric metric-zombies"><span class="metric-label">Zombis</span><strong class="metric-value warning" id="zombieCount">--</strong></article>
+      <article class="metric"><i class="legend-avatar" data-avatar="blocked"></i><span class="metric-label">Bloqueos</span><strong class="metric-value danger" id="blockedCount">--</strong><span id="lastEvent" hidden></span></article>
+    </section>
+    <button class="help-button" id="helpButton" type="button">ⓘ <span>Cómo jugar</span></button>
+  </header>
+  <section class="workspace" aria-label="Centro de operaciones">
+    <article class="map-card">
+      <div class="map-frame" id="mapFrame">
+        <div id="basemap" aria-label="Mapa geográfico de Manta"></div>
+        <svg id="mapSvg" viewBox="0 0 1000 700" role="img" aria-label="Red operativa, rutas, refugios y entidades de la simulación"><g id="streetLayer"></g><g id="routeLayer"></g><g id="refugeLayer"></g><g id="entityLayer"></g></svg>
+        <div class="map-overlay" id="mapMessage">Cargando el mapa de Manta…</div>
+        <div class="map-heading"><p class="eyebrow">MANTA, ECUADOR · OPERACIÓN DE RESCATE</p><h1>Cada ruta cuenta.</h1></div>
+        <div class="map-tools" aria-label="Controles del mapa"><button id="zoomIn" aria-label="Acercar mapa" title="Acercar">+</button><button id="zoomOut" aria-label="Alejar mapa" title="Alejar">−</button><button id="recenterMap" aria-label="Centrar la red de evacuación" title="Centrar red">⌖</button><button id="toggleNetwork" aria-label="Mostrar red operativa" aria-pressed="true" title="Red operativa">⌘</button></div>
+        <div id="selectionCard" class="selection-card" hidden><button id="closeSelection" aria-label="Cerrar detalle">×</button><span class="eyebrow">SOBREVIVIENTE</span><strong id="selectionTitle"></strong><span id="selectionDescription"></span></div>
+        <div class="basemap-notice" id="basemapNotice" hidden>Fondo no disponible · la red operativa sigue activa</div>
+      </div>
+      <div class="legend" aria-label="Leyenda del mapa">
+        <span><i class="legend-avatar" data-avatar="survivor"></i>Sobreviviente</span><span><i class="legend-avatar" data-avatar="walker"></i>Caminante</span><span><i class="legend-avatar" data-avatar="runner"></i>Corredor</span><span><i class="legend-avatar" data-avatar="horde"></i>Horda</span><span><i class="legend-avatar" data-avatar="refuge"></i>Refugio</span><span><i class="legend-avatar" data-avatar="truck"></i>Camioneta</span><span><i class="legend-line"></i>Red operativa</span>
+      </div>
+      <p class="attribution">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> · <a href="https://openfreemap.org" target="_blank" rel="noreferrer">OpenFreeMap</a> · Refugios de demostración</p>
+    </article>
+    <aside class="side-column" aria-label="Controles de la simulación">
+      <article class="control-card">
+        <div class="panel-heading"><div><p class="eyebrow">OPERACIÓN EN VIVO</p><h2>Centro de control</h2></div><span class="panel-dot"></span></div>
+        <h3 id="simulationTitle">Modo espectador</h3><p class="control-copy" id="simulationHelp">Ingresa la clave de control para preparar una ronda.</p>
+        <div class="key-field"><label class="field-label" for="apiKey">Clave de control</label><input id="apiKey" type="password" autocomplete="off" spellcheck="false" placeholder="Ingresa tu clave" /></div>
+        <fieldset class="round-picker" id="roundSelect"><legend class="field-label">Elige la ronda</legend>
+          <label class="round-option"><input type="radio" name="round" value="1" checked /><strong>20</strong><small>Anochecer</small></label>
+          <label class="round-option"><input type="radio" name="round" value="2" /><strong>80</strong><small>Medianoche</small></label>
+          <label class="round-option"><input type="radio" name="round" value="3" /><strong>200</strong><small>Apocalipsis</small></label>
+        </fieldset>
+        <label class="pro-toggle"><span>Rescate Pro<small>Predicción, cupos y 5 camionetas</small></span><input id="proMode" type="checkbox" role="switch" /><span class="switch-track" aria-hidden="true"></span></label>
+        <div class="control-buttons"><button class="button primary" id="startButton" type="button">▶ Iniciar simulación</button><button class="button stop" id="stopButton" type="button" disabled>Ⅱ Pausar</button><button class="button secondary" id="stepButton" type="button">▷ Avanzar turno</button></div>
+        <button class="button secondary" id="resetButton" type="button">↻ Preparar nueva ronda</button><p class="reset-note">Reinicia la partida para todos los espectadores.</p>
+        <div class="simulation-state" id="simulationState"><span class="state-indicator"></span><span>Lectura en vivo activa</span></div><div class="error-box" id="errorBox" role="alert" hidden></div>
+      </article>
+      <article class="rescue-card"><div class="rescue-heading"><h3>Ocupación de refugios</h3><strong id="rescuePercent">—</strong></div><div id="refugeOccupancy" class="occupancy-list"></div><progress id="rescueProgress" max="100" value="0" aria-label="Porcentaje rescatado"></progress><p id="rescueCaption">Esperando datos.</p></article>
+      <details class="settings-card"><summary>Ajustes y telemetría <span>⌄</span></summary>
+      <div class="settings-content">            <details class="advanced-settings"><summary>Ajustes de la ronda</summary>
             <label class="pro-toggle"><input id="runnerContactBites" type="checkbox" /><span>Mordida al pasar<small>Variante más difícil · fuera de la regla del reto</small></span></label>
             <fieldset class="round-picker concurrency-picker" id="concurrencySelect">
               <legend class="field-label">Solicitudes simultáneas</legend>
@@ -108,45 +65,13 @@
             <label class="field-label" for="refugeCapacity">Cupos por refugio (Pro, opcional)</label>
             <input id="refugeCapacity" type="number" min="0" max="1000" placeholder="Automático: 5, 20 o 50" disabled />
             </details>
-            <button class="button secondary" id="resetButton" type="button">↻ Preparar nueva ronda</button>
-            <p class="reset-note">Reinicia la partida para todos los espectadores.</p>
-            <div class="control-buttons">
-              <button class="button primary" id="startButton" type="button">Iniciar simulación →</button>
-              <button class="button secondary" id="stepButton" type="button">Avanzar un turno</button>
-              <button class="button stop" id="stopButton" type="button" disabled>Pausar</button>
-            </div>
-            <div class="simulation-state" id="simulationState"><span class="state-indicator"></span><span>Lectura en vivo activa</span></div>
-            <div class="error-box" id="errorBox" role="alert" hidden></div>
-          </article>
-
-          <article class="rescue-card">
-            <div class="rescue-heading"><p class="eyebrow">PROGRESO DEL RESCATE</p><strong id="rescuePercent">—</strong></div>
-            <progress id="rescueProgress" max="100" value="0" aria-label="Porcentaje de personas rescatadas"></progress>
-            <p id="rescueCaption">Esperando datos de la ronda.</p>
-          </article>
-
-          <article class="event-card">
-            <div class="event-heading"><div><p class="eyebrow">ÚLTIMO EVENTO</p><h2 id="eventTitle">Sin novedades</h2></div><span class="event-icon" aria-hidden="true">!</span></div>
-            <p id="eventDescription">Las rutas permanecen abiertas. Los incidentes aparecerán aquí cuando ocurran.</p>
-          </article>
-
-          <article class="rules-card">
-            <p class="eyebrow">ESTADO DEL MUNDO</p>
-            <div class="rule-row"><span>Duración del turno</span><strong>2 segundos</strong></div>
-            <div class="rule-row"><span>Intersecciones</span><strong id="nodeCount">300</strong></div>
-            <div class="rule-row"><span>Refugios</span><strong id="refugeCount">4</strong></div>
-            <p class="control-copy" id="httpMetrics">Esperando métricas HTTP.</p>
-          </article>
-          <article class="rules-card" id="proPanel" hidden>
-            <p class="eyebrow">NIVEL PRO · RESCATE</p>
-            <p class="control-copy" id="vehicleStatus"></p>
-            <div class="refuge-status" id="refugeStatus"></div>
-            <p class="control-copy">Los anillos naranjas indican posiciones previstas de corredores. Las zonas violetas incluyen los vecinos de las hordas.</p>
-          </article>
-        </aside>
-      </section>
-
-      <footer class="footer"><span>Refugio 593 · Motor de evacuación de Manta</span><span id="sourceStamp">OpenStreetMap contributors</span></footer>
-    </main>
-  </body>
-</html>
+        <div class="rule-row"><span>Duración del turno</span><strong>2 segundos</strong></div><div class="rule-row"><span>Intersecciones</span><strong id="nodeCount">--</strong></div><div class="rule-row"><span>Refugios</span><strong id="refugeCount">4</strong></div><p class="control-copy" id="httpMetrics">Esperando métricas HTTP.</p>
+        <div id="proPanel" hidden><p class="eyebrow">NIVEL PRO</p><p class="control-copy" id="vehicleStatus"></p><div id="refugeStatus" class="refuge-status"></div></div>
+      </div></details>
+    </aside>
+    <article class="event-card"><span class="event-icon" aria-hidden="true">!</span><div><p class="eyebrow">ÚLTIMO EVENTO</p><h2 id="eventTitle">Sin novedades</h2><p id="eventDescription">Los incidentes aparecerán aquí cuando ocurran.</p></div></article>
+  </section>
+  <footer class="footer"><span id="sourceStamp">OpenStreetMap contributors</span></footer>
+  <dialog id="helpDialog"><button id="closeHelp" class="dialog-close" aria-label="Cerrar ayuda">×</button><p class="eyebrow">REFUGIO 593</p><h2>Cada ruta cuenta.</h2><p>Guía a los sobrevivientes hasta los refugios mientras los zombis se mueven y las calles cambian.</p><ol><li>Ingresa la clave de control.</li><li>Elige 20, 80 o 200 personas. Activa Pro para añadir predicción, cupos y camionetas.</li><li>Pulsa <b>Preparar nueva ronda</b> y después <b>Iniciar simulación</b>.</li><li>Arrastra para explorar el mapa y usa la rueda para acercarte. Selecciona una persona para ver su ruta.</li></ol><p class="control-copy">Cada turno dura 2 segundos. Una respuesta tardía deja al sobreviviente quieto. Las calles del fondo son contexto; solo la red resaltada forma parte de la simulación.</p></dialog>
+</main>
+</body></html>

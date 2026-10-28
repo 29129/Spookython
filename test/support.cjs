@@ -25,10 +25,10 @@ class MemoryDynamo {
   }
 }
 
-async function localApi({ serveWeb = false, port = 0 } = {}) {
+async function localApi({ serveWeb = false, port = 0, map } = {}) {
   const client = new MemoryDynamo()
   const store = createStore(client, () => 'test-table')
-  const handler = createHandler(store)
+  const handler = createHandler(store, map)
   const requests = []
   const server = createServer(async (request, response) => {
     const chunks = []
@@ -36,10 +36,13 @@ async function localApi({ serveWeb = false, port = 0 } = {}) {
     const path = new URL(request.url, 'http://localhost').pathname
     if (serveWeb && request.method === 'GET' && !['/health', '/map', '/estado'].includes(path)) {
       const relative = path === '/' ? '/index.html' : path
-      if (!['/index.html', '/avatars.html', '/styles.css', '/app.js', '/simulator-client.mjs', '/map-projection.mjs', '/map-avatars.mjs', '/assets/avatars/spookython-pixel-atlas.png'].includes(relative)) { response.writeHead(404); response.end(); return }
+      if (!['/index.html', '/avatars.html', '/styles.css', '/app.js', '/simulator-client.mjs', '/map-projection.mjs', '/map-avatars.mjs', '/geographic-map.mjs', '/vendor/maplibre-gl.mjs', '/vendor/maplibre-gl-worker.mjs', '/vendor/maplibre-gl-shared.mjs', '/vendor/maplibre-gl.css', '/assets/avatars/spookython-pixel-atlas.png'].includes(relative)) { response.writeHead(404); response.end(); return }
       const binary = relative.endsWith('.png')
       let content = await fs.readFile(require('node:path').join(__dirname, '../web', relative.slice(1)), binary ? undefined : 'utf8')
-      if (relative === '/app.js') content = content.replace('https://gkzb014d54.execute-api.us-east-1.amazonaws.com', `http://127.0.0.1:${server.address().port}`)
+      if (relative === '/app.js') {
+        content = content.replace('https://gkzb014d54.execute-api.us-east-1.amazonaws.com', `http://127.0.0.1:${server.address().port}`)
+        content += `\ndocument.querySelector('#apiKey').value = 'disposable-local-preview-key-1234567890';\n`
+      }
       response.writeHead(200, { 'content-type': binary ? 'image/png' : relative.endsWith('.css') ? 'text/css' : relative.endsWith('.html') ? 'text/html' : 'text/javascript' })
       response.end(content)
       return

@@ -5,7 +5,8 @@ import { fileURLToPath } from 'node:url'
 import { performance } from 'node:perf_hooks'
 
 const require = createRequire(import.meta.url)
-const map = require('../src/data/manta.graph.json')
+const mapArgument = process.argv.find((argument) => argument.startsWith('--map='))?.slice(6)
+const map = require(mapArgument ? path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', mapArgument) : '../src/data/manta.graph.json')
 const { advanceWorld, createInitialState, prepareWorld, resolveWorld } = require('../src/simulation/engine.js')
 const { findBestRoute } = require('../src/routing/planner.js')
 
@@ -229,6 +230,8 @@ async function main() {
     generatedAt: new Date().toISOString(),
     map: map.metadata.name,
     mapVersion: map.metadata.sourceTimestamp,
+    mapNodeCount: map.nodes.length,
+    mapStreetCount: map.streets.length,
     source: 'Simulación local determinista; latencia del planificador sin latencia de red AWS.',
     maxTurnsPerRound: MAX_TURNS,
     scenarios,
@@ -237,7 +240,7 @@ async function main() {
 
   const reportsDirectory = path.join(root, 'reports', 'audit')
   await mkdir(reportsDirectory, { recursive: true })
-  const reportPath = path.join(reportsDirectory, 'fire-drill-latest.json')
+  const reportPath = path.join(reportsDirectory, mapArgument ? `fire-drill-map-${map.nodes.length}-latest.json` : 'fire-drill-latest.json')
   await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`, 'utf8')
   console.log(JSON.stringify({ ...report, reportPath: path.relative(root, reportPath) }, null, 2))
 

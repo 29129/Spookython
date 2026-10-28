@@ -8,6 +8,8 @@ flowchart LR
     OSM[Datos del mapa<br/>OpenStreetMap empaquetados]
 
     Browser -->|HTML, CSS, JS| CF
+    Basemap[OpenFreeMap / OpenStreetMap<br/>fondo geográfico externo]
+    Browser -->|MapLibre: estilo, teselas y fuentes| Basemap
     CF -->|OAC, acceso privado| S3
     Browser -->|GET /map, /estado<br/>POST /paso por persona<br/>PREPARE y RESOLVE| APIGW
     APIGW --> Lambda

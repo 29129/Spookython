@@ -1,10 +1,16 @@
 # Refugio 593
 
-Motor de evacuación y simulador de Manta para SpookyThon 2026. Usa un grafo real de OpenStreetMap con 300 intersecciones, 424 calles y cuatro refugios. El panel muestra zombis, sobrevivientes, rutas, cierres y rescate en vivo.
+Motor de evacuación y simulador de Manta para SpookyThon 2026. Usa un grafo real de OpenStreetMap con 600 intersecciones, 868 calles y cuatro refugios. El panel muestra zombis, sobrevivientes, rutas, cierres y rescate en vivo.
 
 La revisión del 26/10/2026 contrastó el código con las capturas del reto y corrigió el plan inicial: **las hordas bloquean su nodo y todos sus vecinos**. El nivel Pro está implementado como opción al crear una ronda. Consulta la comparación completa en [docs/auditoria-requisitos.md](docs/auditoria-requisitos.md).
 
 Los identificadores técnicos, las variables de entorno y el repositorio conservan el nombre Spookython para mantener la compatibilidad del despliegue.
+
+## Revisión de mapa y diseño
+
+Desplegada y verificada por HTTP el 28/10/2026. [Comprobante de publicación](reports/deployments/release-600-20261028.json). La revisión actual incorpora un mapa navegable con fondo azul petróleo, red operativa ámbar, iconos vectoriales, paneles flotantes y **600 intersecciones conectadas / 868 calles**. Mantiene cuatro refugios de demostración. El fondo OpenFreeMap requiere Internet y WebGL; sus calles adicionales son contexto, no parte de la red transitable del simulador. La vista 3D aún no está implementada.
+
+Los ensayos AWS y la presentación de la entrega inicial describen la red anterior de 300 nodos. La ampliación tiene evidencia local separada en `reports/audit/fire-drill-map-600-latest.json`, sin medición de latencia AWS atribuida a la nueva red. Tras desplegar esta revisión, preparar una nueva ronda para renovar refugios y rutas del mundo compartido.
 
 ## Estado de la entrega
 
