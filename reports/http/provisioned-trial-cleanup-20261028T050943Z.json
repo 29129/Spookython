@@ -1,0 +1,10 @@
+﻿{
+    "capacityCount":  200,
+    "cleanupDeploymentSucceeded":  true,
+    "finishedAt":  "2026-10-28T05:09:43.8612694+00:00",
+    "memoryMb":  1024,
+    "startedAt":  "2026-10-28T04:50:25.1311918+00:00",
+    "deploymentLog":  "C:\\Users\\MSI\\Documents\\Codex\\2026-09-07\\qui\\Spookython\\tmp\\provisioned-trial-logs\\trial-20261028T045025Z.log",
+    "report":  "C:\\Users\\MSI\\Documents\\Codex\\2026-09-07\\qui\\Spookython\\reports\\http\\fire-drill-base-provisioned-20261028T050843Z.json",
+    "activationAttempted":  true
+}

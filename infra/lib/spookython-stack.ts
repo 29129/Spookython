@@ -30,22 +30,34 @@ export class SpookythonStack extends cdk.Stack {
       retention: logs.RetentionDays.ONE_WEEK,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     })
+    const apiMemoryMb = Number(process.env.SPOOKYTHON_LAMBDA_MEMORY_MB || 512)
+    if (![512, 1024, 1769].includes(apiMemoryMb)) throw new Error('SPOOKYTHON_LAMBDA_MEMORY_MB debe ser 512, 1024 o 1769.')
     const apiHandler = new nodejs.NodejsFunction(this, 'ApiHandler', {
       runtime: lambda.Runtime.NODEJS_22_X,
       architecture: lambda.Architecture.ARM_64,
       functionName: 'spookython-api-handler',
       logGroup: apiLogGroup,
-      entry: path.join(__dirname, '../../src/handler.js'),
-      bundling: { bundleAwsSDK: true, minify: true, sourceMap: false },
-      memorySize: 512,
+      entry: path.join(__dirname, '../../src/lambda-entry.mjs'),
+      bundling: { bundleAwsSDK: true, minify: true, sourceMap: false, format: nodejs.OutputFormat.ESM,
+        // Single quotes survive Windows cmd escaping in CDK's esbuild CLI.
+        banner: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);" },
+      memorySize: apiMemoryMb,
       timeout: cdk.Duration.seconds(8),
       environment: {
         MAP_VERSION: '1',
+        DEPLOYMENT_LABEL: process.env.SPOOKYTHON_DEPLOYMENT_LABEL || 'default',
         WORLD_STATE_TABLE_NAME: worldStateTable.tableName,
         SIMULATOR_API_KEY_SHA256: process.env.SIMULATOR_API_KEY_SHA256 || '',
       },
     })
     worldStateTable.grant(apiHandler, 'dynamodb:GetItem', 'dynamodb:PutItem')
+    // Opt-in only: pre-initialized environments have an ongoing capacity charge.
+    const provisionedCount = Number(process.env.SPOOKYTHON_PROVISIONED_CONCURRENCY || 0)
+    if (![0, 50, 100, 150, 200].includes(provisionedCount)) throw new Error('SPOOKYTHON_PROVISIONED_CONCURRENCY debe ser 0, 50, 100, 150 o 200; los valores positivos tienen costo continuo.')
+    const apiTarget = provisionedCount > 0 ? new lambda.Alias(this, 'PreparedApiAlias', {
+      aliasName: 'prepared', version: apiHandler.currentVersion,
+      provisionedConcurrentExecutions: provisionedCount,
+    }) : apiHandler
 
     const api = new apigwv2.HttpApi(this, 'SpookythonHttpApi', {
       apiName: 'spookython-api',
@@ -54,10 +66,11 @@ export class SpookythonStack extends cdk.Stack {
         allowOrigins: ['*'],
         allowMethods: [apigwv2.CorsHttpMethod.GET, apigwv2.CorsHttpMethod.POST],
         allowHeaders: ['content-type', 'x-api-key'],
+        exposeHeaders: ['x-app-duration-ms', 'x-first-invocation', 'x-lambda-memory-mb', 'x-lambda-init-type', 'x-lambda-qualifier'],
         maxAge: cdk.Duration.hours(1),
       },
     })
-    const integration = new HttpLambdaIntegration('ApiIntegration', apiHandler)
+    const integration = new HttpLambdaIntegration('ApiIntegration', apiTarget)
     api.addRoutes({ path: '/health', methods: [apigwv2.HttpMethod.GET], integration })
     api.addRoutes({ path: '/map', methods: [apigwv2.HttpMethod.GET], integration })
     api.addRoutes({ path: '/estado', methods: [apigwv2.HttpMethod.GET], integration })

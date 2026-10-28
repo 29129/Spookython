@@ -3,13 +3,23 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { advanceHttpTurn } from '../web/simulator-client.mjs'
 import { latencyScore, availabilityScore, rubricSummary } from './rubric.mjs'
+import { createHttp2Fetch } from './http2-fetch.mjs'
 
 const baseUrl = (process.env.SPOOKYTHON_API_BASE_URL || '').replace(/\/$/, '')
 const apiKey = process.env.SIMULATOR_API_KEY
 if (!baseUrl || !apiKey) throw new Error('Configura SPOOKYTHON_API_BASE_URL y SIMULATOR_API_KEY localmente.')
+const useHttp2 = process.argv.includes('--http2')
+const h2ConnectionsArg = process.argv.find((argument) => argument.startsWith('--http2-connections='))
+const h2Connections = h2ConnectionsArg ? Number(h2ConnectionsArg.split('=')[1]) : 1
+if (![1, 2].includes(h2Connections) || (h2ConnectionsArg && !useHttp2)) throw new Error('--http2-connections requiere --http2 y admite 1 o 2.')
+const transport = useHttp2 ? createHttp2Fetch(baseUrl, {connections: h2Connections}) : null
+const fetchImpl = transport?.fetch || fetch
 const pro = process.argv.includes('--pro')
 const fast = process.argv.includes('--fast')
 const runnerContactBites = process.argv.includes('--runner-contact-bites')
+const maxTurnsArg = process.argv.find((argument) => argument.startsWith('--max-turns='))
+const maxTurns = maxTurnsArg ? Number(maxTurnsArg.split('=')[1]) : 150
+if (!Number.isInteger(maxTurns) || maxTurns < 1 || maxTurns > 150 || (maxTurns !== 150 && !fast)) throw new Error('--max-turns requiere --fast y un entero entre 1 y 150.')
 const concurrencyArg = process.argv.find((argument) => argument.startsWith('--concurrency='))
 const concurrency = concurrencyArg ? Number(concurrencyArg.split('=')[1]) : Infinity
 if (concurrency !== Infinity && (!Number.isInteger(concurrency) || concurrency < 1 || concurrency > 200)) throw new Error('--concurrency debe ser un entero entre 1 y 200.')
@@ -22,7 +32,7 @@ const percentile = (values, fraction) => {
   return ordered.length ? Number(ordered[Math.max(0, Math.ceil(ordered.length * fraction) - 1)].toFixed(2)) : null
 }
 async function request(route, body) {
-  const response = await fetch(`${baseUrl}${route}`, body === undefined ? { signal: AbortSignal.timeout(10000) } : {
+  const response = await fetchImpl(`${baseUrl}${route}`, body === undefined ? { signal: AbortSignal.timeout(10000) } : {
     signal: AbortSignal.timeout(10000),
     method: 'POST', headers: { 'content-type': 'application/json', 'x-api-key': apiKey }, body: JSON.stringify(body) })
   const data = await response.json()
@@ -49,14 +59,18 @@ for (const round of selected) {
   let state = await request('/simulacion/reiniciar', { round, pro, runnerContactBites })
   if (state.runnerContactBites !== runnerContactBites) throw new Error('La API no confirma el modo de mordida solicitado. Despliega la versión actual antes de certificar estas pruebas.')
   const baseline = new Map(state.survivors.map((survivor) => [survivor.id, baselineTurns(map, survivor.nodeId)]))
-  const latencies = [], queueTimes = [], decisionTimes = []
+  const latencies = [], queueTimes = [], decisionTimes = [], turnDiagnostics = [], serverDurations = []
+  const observedMemoryMb = new Set()
+  const observedInitializationTypes = new Set(), observedQualifiers = new Set()
+  let firstInvocationsWithResponse = 0
   const httpStatuses = {}
+  const errorCodes = {}
   let timeouts = 0, errors = 0, maxConcurrent = 0, slowTurns = 0, failure = null
   const started = performance.now()
-  for (let index = 0; index < 150 && !state.roundFinished; index += 1) {
+  for (let index = 0; index < maxTurns && !state.roundFinished; index += 1) {
     if (!fast && performance.now() - started >= 300000) break
     try {
-      const result = await advanceHttpTurn({ baseUrl, apiKey, currentState: state, concurrency })
+      const result = await advanceHttpTurn({ baseUrl, apiKey, currentState: state, concurrency, fetchImpl })
       state = result.state
       maxConcurrent = Math.max(maxConcurrent, result.maxConcurrentRequests)
       if (result.durationMs > 2000) slowTurns += 1
@@ -64,11 +78,24 @@ for (const round of selected) {
         latencies.push(decision.durationMs)
         queueTimes.push(decision.queueMs)
         decisionTimes.push(decision.queueMs + decision.durationMs)
+        if (Number.isFinite(decision.serverDurationMs)) serverDurations.push(decision.serverDurationMs)
+        if (decision.firstInvocation === true) firstInvocationsWithResponse += 1
+        if (decision.lambdaMemoryMb) observedMemoryMb.add(decision.lambdaMemoryMb)
+        if (decision.initializationType) observedInitializationTypes.add(decision.initializationType)
+        if (decision.lambdaQualifier) observedQualifiers.add(decision.lambdaQualifier)
         httpStatuses[decision.httpStatus] = (httpStatuses[decision.httpStatus] || 0) + 1
+        if (decision.errorCode) errorCodes[decision.errorCode] = (errorCodes[decision.errorCode] || 0) + 1
         if (decision.timedOut || decision.durationMs > 500) timeouts += 1
         else if (decision.error) errors += 1
       }
-      console.log(`R${round} T${state.turn}: activos=${state.summary.activeSurvivors}, rescatados=${state.summary.rescuedSurvivors}, mordidos=${state.summary.bittenSurvivors}`)
+      const turnTimeouts = result.decisions.filter((decision) => decision.timedOut || decision.durationMs > 500).length
+      const turnErrors = result.decisions.filter((decision) => !decision.timedOut && decision.durationMs <= 500 && decision.error).length
+      const waitingWithoutRoute = state.survivors.filter((survivor) => survivor.status === 'ACTIVE' && (survivor.routeNodeIds?.length || 0) <= 1).length
+      turnDiagnostics.push({ turn: state.turn, calls: result.decisions.length, timeouts: turnTimeouts, errors: turnErrors,
+        p95HttpMs: percentile(result.decisions.map((decision) => decision.durationMs), .95),
+        p95HandlerMsReceived: percentile(result.decisions.map((decision) => decision.serverDurationMs).filter(Number.isFinite), .95),
+        durationMs: Number(result.durationMs.toFixed(2)), active: state.summary.activeSurvivors, waitingWithoutRoute })
+      console.log(`R${round} T${state.turn}: activos=${state.summary.activeSurvivors}, rescatados=${state.summary.rescuedSurvivors}, mordidos=${state.summary.bittenSurvivors}, timeouts=${turnTimeouts}, sin ruta=${waitingWithoutRoute}`)
     } catch (error) { failure = error.message; break }
     if (!fast) await sleep(Math.max(0, Math.min(2000, (index + 1) * 2000 - (performance.now() - started))))
   }
@@ -93,7 +120,10 @@ for (const round of selected) {
     activeAtEnd: state.summary.activeSurvivors, survivalPercent: 100 * (state.survivors.length - state.summary.bittenSurvivors) / state.survivors.length,
     meanRouteEfficiencyPercent: efficiencies.length ? Number((efficiencies.reduce((sum, value) => sum + value, 0) / efficiencies.length).toFixed(2)) : null,
     calls: latencies.length, maxConcurrentRequests: maxConcurrent, p95HttpMs: percentile(latencies, 0.95), maxHttpMs: percentile(latencies, 1),
-    p95QueueMs: percentile(queueTimes, .95), p95QueuePlusHttpMs: percentile(decisionTimes, .95), httpStatuses,
+    p95QueueMs: percentile(queueTimes, .95), p95QueuePlusHttpMs: percentile(decisionTimes, .95), httpStatuses, errorCodes,
+    handlerMeasurementsReceived: serverDurations.length, p95HandlerMsReceived: percentile(serverDurations, .95),
+    firstInvocationsWithResponse, observedMemoryMb: [...observedMemoryMb],
+    observedInitializationTypes: [...observedInitializationTypes], observedQualifiers: [...observedQualifiers],
     timeouts, errors, errorOrTimeoutPercent: latencies.length ? 100 * (timeouts + errors) / latencies.length : null,
     latencyBandScore: latencyScore(percentile(latencies, .95)),
     availabilityBandScore: availabilityScore(errors, timeouts, latencies.length),
@@ -102,16 +132,24 @@ for (const round of selected) {
     allTurnsWithinCadence: slowTurns === 0,
     refugeOverflow: state.refuges.some((refuge) => refuge.capacity !== null && refuge.occupied > refuge.capacity),
     failure })
+  rounds.at(-1).turnDiagnostics = turnDiagnostics
+  rounds.at(-1).unrescuedSurvivors = state.survivors.filter((survivor) => ['ACTIVE', 'ONBOARD'].includes(survivor.status))
+    .map((survivor) => ({ id: survivor.id, nodeId: survivor.nodeId, status: survivor.status,
+      hasPlannedRoute: (survivor.routeNodeIds?.length || 0) > 1 }))
 }
 const report = { generatedAt: new Date().toISOString(), source: 'HTTP real desde el equipo que ejecuta el script; no mide solo el algoritmo.',
-  baseUrl, pro, runnerContactBites, accelerated: fast, concurrencyLimit: Number.isFinite(concurrency) ? concurrency : null,
+  baseUrl, pro, runnerContactBites, accelerated: fast, maxTurns, transport: useHttp2 ? 'HTTP2' : 'NODE_FETCH_DEFAULT',
+  http2Connections: useHttp2 ? h2Connections : null,
+  telemetryNote: 'Handler excluye inicialización, API Gateway y red. Solo respuestas recibidas aportan telemetría; no describe las peticiones abortadas. firstInvocation no mide Init Duration.',
+  concurrencyLimit: Number.isFinite(concurrency) ? concurrency : null,
   rubric: rubricSummary(rounds, { fast, concurrency, runnerContactBites }),
   loadMode: Number.isFinite(concurrency) ? 'CAPPED_NOT_FULL_CONCURRENCY' : 'FULL_CONCURRENCY', deadlineMs: 500, targetTurnMs: 2000, rounds }
 const directory = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../reports/http')
 await mkdir(directory, { recursive: true })
-const destination = path.join(directory, `fire-drill-${pro ? 'pro' : 'base'}${runnerContactBites ? '-custom-bites' : ''}${Number.isFinite(concurrency) ? `-capped-${concurrency}` : ''}-latest.json`)
+const destination = path.join(directory, `fire-drill-${pro ? 'pro' : 'base'}${runnerContactBites ? '-custom-bites' : ''}${Number.isFinite(concurrency) ? `-capped-${concurrency}` : ''}${maxTurns !== 150 ? `-turns-${maxTurns}` : ''}${useHttp2 ? `-http2${h2Connections === 2 ? '-2connections' : ''}` : ''}-latest.json`)
 await writeFile(destination, `${JSON.stringify(report, null, 2)}\n`)
 console.log(JSON.stringify(report, null, 2))
 console.log(`Reporte guardado: ${destination}`)
+if (transport) await transport.close()
 if (rounds.some((round) => round.failure || round.invalidMoves || round.refugeOverflow || !round.completed
   || round.timeouts || round.errors || round.slowTurns || round.p95HttpMs === null || round.p95HttpMs > 500)) process.exitCode = 1

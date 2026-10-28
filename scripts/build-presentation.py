@@ -30,7 +30,7 @@ def page(number, eyebrow, title):
     para(eyebrow.upper(), 44, 505, 850, 11, CYAN, True)
     para(title, 44, 468, 870, 32, TEXT, True)
     c.setStrokeColor(colors.HexColor('#30415b')); c.line(44, 52, 916, 52)
-    para('SPOOKYTHON 2026 | MANTA | Revisión local 26/10/2026', 44, 35, 700, 9, MUTED)
+    para('SPOOKYTHON 2026 | MANTA | Evidencia actualizada 28/10/2026', 44, 35, 700, 9, MUTED)
     para(f'{number}/6', 880, 35, 40, 10, MUTED)
 
 def card(x, top, width, title, text, height=230):
@@ -41,7 +41,7 @@ def card(x, top, width, title, text, height=230):
 page(1, 'Track A - Escape de Manta zombi', 'Cada turno cambia la ruta')
 para('Un motor que guía a cada sobreviviente hacia un refugio mientras cambian las calles y se mueven los peligros.', 44, 373, 485, 24)
 para('300 intersecciones reales<br/>424 calles - 4 refugios<br/>Rondas de 20, 80 y 200 personas', 44, 244, 470, 21, CYAN)
-para('Panel en vivo, API de decisión y simulador desplegables en AWS.', 44, 124, 500, 15, MUTED)
+para('Panel en vivo, API de decisión y simulador desplegados en AWS.', 44, 124, 500, 15, MUTED)
 nodes = [(610,330),(710,385),(815,330),(710,250),(835,190)]
 c.setStrokeColor(MUTED); c.setLineWidth(2)
 for a,b in [(0,1),(1,2),(0,3),(3,2),(3,4),(2,4)]: c.line(*nodes[a], *nodes[b])
@@ -82,19 +82,17 @@ card(640, 383, 276, '5 camionetas', 'Cuatro plazas por vehículo.<br/>Dos calles
 para('Supuestos declarados: cupos 5/20/50 por refugio según ronda; predicción condicionada al snapshot; sin combate de vehículos.', 44, 122, 866, 15, MUTED)
 c.showPage()
 
-page(5, 'Evidencia y límites', 'Reglas probadas; nube por medir')
-headers = [('Modo',44),('Personas',210),('Rescatadas',370),('Mordidas',550),('Sin evacuar',720)]
-for title,x in headers: para(title,x,388,160,16,CYAN,True)
-for index,row in enumerate(report['rounds']):
-    top = 352-index*32
-    for text,x in [('Pro' if row['pro'] else 'Base',44),(str(row['survivorCount']),210),(str(row['rescued']),370),(str(row['bitten']),550),(str(row['activeAtEnd']),720)]: para(text,x,top,160,16)
-para('15 pruebas funcionales - 6 rondas locales sin movimientos inválidos ni refugios desbordados.',44,145,865,16,CYAN)
-para(f"HTTP local, 200 simultáneas: p95 {http['p95HttpMs']:.0f} ms; {http['timeouts']} fuera de plazo. No aprueba la meta de latencia; AWS sigue pendiente.",44,112,865,15,GOLD)
+page(5, 'Evidencia HTTP real en AWS', '1.730 respuestas correctas, sin timeouts')
+card(44, 383, 276, '298,72 ms', 'p95 HTTP desde el equipo de prueba.<br/><br/>Ronda 3 base: 200 personas, 12 turnos acelerados.', 210)
+card(342, 383, 276, '0 errores', '1.730 solicitudes, todas HTTP 200.<br/><br/>0 timeouts, 0 pasos inválidos y 0 turnos mayores de 2 segundos.', 210)
+card(640, 383, 276, 'Prueba temporal', '200 entornos aprovisionados de 1 GB.<br/><br/>Primeras invocaciones incluidas. Capacidad retirada al terminar.', 210)
+para('28 pruebas automatizadas aprobadas; casos de reglas, concurrencia, Pro y artefacto Lambda.',44,139,865,16,CYAN)
+para('Límite: ensayo parcial, no las tres rondas oficiales. La configuración actual es bajo demanda; estos resultados no acreditan su latencia ni una nota global de 10.',44,106,865,15,GOLD)
 c.showPage()
 
 page(6, 'Demo y entrega', 'Medir antes de afirmar cumplimiento')
 card(44, 383, 420, 'Demostración', '1. Elegir ronda y crear el mundo.<br/>2. Mostrar posiciones, rutas y cierres.<br/>3. Activar Pro: cupos y camionetas.<br/>4. Revisar métricas y evidencia HTTP.',205)
-card(486, 383, 430, 'Costos y pendientes', 'Budget mensual de USD 5 con alertas.<br/><br/>Cost Explorer muestra neto de cuenta redondeado a 0,00 USD; incluye el sistema anterior.<br/><br/>Falta desplegar y medir esta revisión en AWS.',205)
+card(486, 383, 430, 'Costos y operación', 'Budget mensual de USD 5 con alertas.<br/><br/>Modelo bajo demanda: USD 0,7548/mes para el volumen declarado, más servicios excluidos.<br/><br/>Gasto final por conciliar en Billing; ensayos pagados separados.',205)
 para('Código, arquitectura, instrucciones, costos y reportes:',44,148,870,16,MUTED)
 para('github.com/29129/Spookython',44,118,870,20,CYAN,True)
 para('El equipo debe poder explicar cada regla y ensayar 5 minutos de pitch + 3 de preguntas.',44,82,870,13,MUTED)

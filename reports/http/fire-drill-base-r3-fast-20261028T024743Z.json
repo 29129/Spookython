@@ -1,0 +1,57 @@
+{
+  "generatedAt": "2026-10-28T02:47:43.581Z",
+  "source": "HTTP real desde el equipo que ejecuta el script; no mide solo el algoritmo.",
+  "baseUrl": "https://gkzb014d54.execute-api.us-east-1.amazonaws.com",
+  "pro": false,
+  "runnerContactBites": false,
+  "accelerated": true,
+  "concurrencyLimit": null,
+  "rubric": {
+    "weightedSurvivalPercent": null,
+    "fullProtocol": false,
+    "allLatencyBands10": false,
+    "allAvailabilityBands10": false,
+    "finalScore": null,
+    "note": "No se inventa una nota final: la captura no detalla la conversión de supervivencia y eficiencia a notas ni cómo agregar latencia entre rondas. Los umbrales se muestran por ronda. Tener protocolo completo no garantiza 10 ni aprueba la cadencia."
+  },
+  "loadMode": "FULL_CONCURRENCY",
+  "deadlineMs": 500,
+  "targetTurnMs": 2000,
+  "rounds": [
+    {
+      "round": 3,
+      "pro": false,
+      "survivorCount": 200,
+      "actualDurationSeconds": 73.29,
+      "turns": 150,
+      "completed": true,
+      "rescued": 189,
+      "bitten": 9,
+      "activeAtEnd": 2,
+      "survivalPercent": 95.5,
+      "meanRouteEfficiencyPercent": 69.35,
+      "calls": 2383,
+      "maxConcurrentRequests": 200,
+      "p95HttpMs": 515.73,
+      "maxHttpMs": 547.44,
+      "p95QueueMs": 18.71,
+      "p95QueuePlusHttpMs": 532.31,
+      "httpStatuses": {
+        "0": 193,
+        "200": 2190
+      },
+      "timeouts": 193,
+      "errors": 0,
+      "errorOrTimeoutPercent": 8.09903483004616,
+      "latencyBandScore": 0,
+      "availabilityBandScore": 0,
+      "rescuedPercent": 94.5,
+      "invalidMoves": 0,
+      "slowTurns": 0,
+      "allCallsWithinDeadline": false,
+      "allTurnsWithinCadence": true,
+      "refugeOverflow": false,
+      "failure": null
+    }
+  ]
+}

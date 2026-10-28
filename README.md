@@ -6,9 +6,13 @@ La revisión del 26/10/2026 contrastó el código con las capturas del reto y co
 
 ## Estado de la entrega
 
-La versión anterior de API y panel ya se desplegó en AWS y se abrió desde un navegador público. Su prueba serial de 20 llamadas produjo p95 de 258,18 ms y máximo de 263,59 ms. Estas cifras pertenecen a la versión anterior y no certifican 200 consultas simultáneas.
+API y panel desplegados en AWS. Cuota Lambda ampliada a 1.000. Verificación local: **28 pruebas aprobadas y compilación TypeScript correcta**.
 
-La nueva revisión de reglas y Pro está validada localmente y **requiere actualizar el despliegue**. Los 15 casos funcionales pasan; las seis rondas locales no produjeron movimientos inválidos ni refugios desbordados. El ensayo HTTP local de 200 peticiones usa un único proceso y un adaptador de DynamoDB de prueba: registró timeouts y no aprobó el objetivo de latencia. No es una medición de AWS. La prueba pública de las tres rondas sigue pendiente.
+- [Abrir aplicación](https://d2qqi0nkfeyck5.cloudfront.net).
+- API: `https://gkzb014d54.execute-api.us-east-1.amazonaws.com`; decisión: `POST /paso`.
+- Último ensayo HTTP real: **1.730/1.730 respuestas HTTP 200, cero errores y timeouts, p95 298,72 ms**. Ronda 3 base, 200 personas, 12 turnos acelerados, HTTP/2 con dos conexiones y 200 entornos aprovisionados de 1 GB. [Reporte](reports/http/fire-drill-base-provisioned-20261028T050843Z.json).
+- La capacidad temporal se retiró correctamente. **La aplicación actual funciona bajo demanda**: el resultado anterior no acredita su latencia. Los arranques en frío siguen siendo una limitación.
+- El nivel Pro está implementado y probado localmente; el ensayo citado es base y parcial. No acredita las tres rondas oficiales ni una calificación global de 10.
 
 ## Ejecutar y comprobar
 
@@ -70,6 +74,8 @@ Las capturas no fijan capacidades concretas ni reglas especiales de combate para
 Las reservas pueden obligar a caminar más y Pro no garantiza mejorar todas las métricas. El reporte muestra ambos modos para que el equipo pueda elegir con evidencia.
 
 ## Prueba de fuego HTTP real
+
+Para investigar latencia sin completar 150 turnos: [diagnóstico de latencia](docs/diagnostico-latencia.md). `--round=3 --fast --max-turns=12` conserva la carga completa y el plazo de 500 ms, pero es un ensayo incompleto con reporte separado. La API instrumentada adjunta tiempo de handler, primera invocación y memoria; las peticiones abortadas no aportan estas cabeceras y siguen contando como timeouts. `SPOOKYTHON_LAMBDA_MEMORY_MB` permite comparar 512/1024/1769 MB mediante CDK; hay que conservar esa variable en despliegues posteriores si se elige un valor distinto de 512. El modelo de costos se actualizó a 1024 MB y separa los ensayos temporales pagados.
 
 **Reglas para evaluación:** por defecto, se aplica la mordida original del reto (coincidencia al final del turno o cruce opuesto). La variante «Mordida al pasar» solicitada por el usuario se conserva en Ajustes, desactivada por defecto: `runnerContactBites: true` al reiniciar o `--runner-contact-bites` en el runner. Esa variante resuelve la mordida en PREPARE, antes del movimiento humano, y sus reportes se guardan por separado; no acredita el protocolo del reto. Los resultados de ambas variantes no deben mezclarse.
 
@@ -138,6 +144,6 @@ Salidas: `ApiBaseUrl`, `WebUrl` y `WorldStateTableName`. Esta revisión añade l
 - [Repositorio público](https://github.com/29129/Spookython), con historial; publicar los últimos cambios y verificar que la rama remota incluya la versión entregada.
 - [Lista de cierre y acceso del evaluador](docs/cierre-entrega.md).
 
-El usuario confirmó el despliegue de base y Pro. Pendientes para afirmar cumplimiento completo: desplegar la alternativa opcional del panel si se usará, resolver la capacidad regional y ejecutar las rondas HTTP con carga real y revisar latencia/disponibilidad (incluidos arranques en frío), publicar los últimos cambios y cargar los entregables en la plataforma antes del miércoles 28/10/2026 a las 10:00 de Ecuador. La evidencia actualizada del Budget con destinatario verificado ya está incorporada. El pitch de cinco minutos y sus tres minutos de preguntas deben ensayarse con el equipo; un PDF o guion no acredita el ensayo.
+Pendientes externos para cerrar la entrega: publicar los cambios en el repositorio, compartir la clave vigente por un canal privado con el evaluador y cargar los enlaces y el PDF en la plataforma antes del 28/10/2026 a las 10:00 de Ecuador. La evidencia de Budget está incorporada. Las tres rondas oficiales con la configuración final y la conciliación del gasto real no quedan acreditadas por el ensayo parcial. El equipo debe ensayar cinco minutos de pitch y tres de preguntas.
 
 La demo comparte un mundo, no implementa cuentas ni partidas privadas. El mapa y refugios son de demostración; las velocidades y cupos son supuestos. El Budget de USD 5 avisa, pero no detiene gastos. Los datos actuales de Cost Explorer mezclan esta aplicación con servicios del sistema anterior y están redondeados; no demuestran costo cero de Spookython.

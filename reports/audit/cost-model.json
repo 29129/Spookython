@@ -9,7 +9,7 @@
   "requests": 91806,
   "snapshotBytesAssumed": 102400,
   "lambdaDurationSecondsAssumed": 0.2,
-  "lambdaMemoryGb": 0.5,
+  "lambdaMemoryGb": 1,
   "readUnits": 2295150,
   "writeUnits": 180600,
   "prices": {
@@ -21,14 +21,15 @@
   },
   "estimatedUsdBeforeFreeTier": {
     "api": 0.091806,
-    "lambda": 0.14076981204,
+    "lambda": 0.26317842408000003,
     "dynamodb": 0.39976875,
-    "subtotal": 0.63234456204
+    "subtotal": 0.75475317408
   },
   "excluded": [
     "S3",
     "CloudFront",
     "CloudWatch",
+    "concurrencia aprovisionada temporal",
     "transferencia de datos",
     "despliegues",
     "impuestos"

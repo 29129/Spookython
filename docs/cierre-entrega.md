@@ -1,6 +1,6 @@
 # Cierre de entrega Track A
 
-Estado al 27/10/2026. Fecha límite indicada por el reto: 28/10/2026, 10:00, Ecuador.
+Estado al 28/10/2026. Fecha límite indicada por el reto: 28/10/2026, 10:00, Ecuador.
 
 ## Acceso para quien evalúa
 
@@ -24,3 +24,9 @@ Budget comprobado: `docs/budget.png` muestra destinatario Verified asociado a do
 ## Al aprobarse el aumento
 
 Volver a consultar `ConcurrentExecutions` y ejecutar las rondas HTTP base y Pro sin límite de concurrencia. Revisar p95, HTTP 503/otros errores, timeouts, turnos >2 s, pasos inválidos y cupos. Si persisten fallos, no dar por cerrado el rendimiento: correlacionar la prueba con CloudWatch y la integración de API Gateway.
+
+## Cierre técnico del 28/10/2026
+
+Cuota Lambda de 1.000 aprobada. Compilación correcta y 28 pruebas aprobadas. API y panel desplegados. Último ensayo AWS parcial: 1.730 HTTP 200, cero errores/timeouts, p95 298,72 ms con capacidad temporal; retirada confirmada. Operación actual bajo demanda, con riesgo de arranques en frío. El PDF incorpora este resultado y sus límites. No repetir un ensayo pagado como requisito para subir los archivos: entregar la evidencia disponible y declarar lo que aún no está acreditado.
+
+Orden de entrega: publicar el código; abrir el enlace público; subir el PDF y enlaces a la plataforma; entregar la clave por canal privado; conservar el comprobante de recepción. No destruir el stack antes del pitch.

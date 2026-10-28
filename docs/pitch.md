@@ -20,7 +20,7 @@ Mostrar [`arquitectura.svg`](arquitectura.svg). CloudFront sirve el panel por HT
 
 ### 3:00–4:00 — Evidencia
 
-Mostrar [`../reports/audit/fire-drill-latest.json`](../reports/audit/fire-drill-latest.json). Se probaron 20, 80 y 200 personas en base y Pro, sin movimientos inválidos ni cupos desbordados. Explicar que son simulaciones aceleradas locales. El reporte HTTP local de 200 llamadas tuvo respuestas fuera de plazo y no acredita rendimiento AWS. Antes del pitch, ejecutar las rondas reales y usar sus cifras de `reports/http/`; no reutilizar el p95 serial de la versión anterior como si fuera concurrente.
+Mostrar `reports/http/fire-drill-base-provisioned-20261028T050843Z.json`: ensayo AWS base de 200 personas y 12 turnos, 1.730 HTTP 200, cero errores y timeouts, p95 298,72 ms. Se incluyeron primeras invocaciones. Usó 200 entornos temporales de 1 GB y dos conexiones HTTP/2. Se retiró la capacidad al terminar; la demo actual es bajo demanda y puede sufrir arranques en frío. No afirmar tres rondas oficiales completas ni nota global 10. Hay 28 pruebas automatizadas aprobadas, incluyendo reglas y Pro.
 
 ### 4:00–4:35 — Costos y límites
 

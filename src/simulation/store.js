@@ -1,6 +1,5 @@
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb')
 const { DynamoDBDocumentClient, GetCommand, PutCommand } = require('@aws-sdk/lib-dynamodb')
-const { prepareWorld, resolveWorld, createInitialState, ROUND_COUNTS } = require('./engine')
 
 const dynamoDb = DynamoDBDocumentClient.from(new DynamoDBClient({ region: process.env.AWS_REGION || 'us-east-1', maxAttempts: 2 }),
   { marshallOptions: { removeUndefinedValues: true } })
@@ -8,6 +7,11 @@ const stale = () => Object.assign(new Error('El turno cambió en otro cliente. A
 
 function createStore(client = dynamoDb, table = () => process.env.WORLD_STATE_TABLE_NAME) {
   const tableName = () => { const value = table(); if (!value) throw new Error('Falta configurar WORLD_STATE_TABLE_NAME.'); return value }
+  async function initializeConnection() {
+    // A missing metadata item opens credentials/TLS without reading the whole world.
+    await client.send(new GetCommand({ TableName: tableName(),
+      Key: { worldId: 'manta-demo', entityId: 'INITIALIZATION_CHECK' }, ConsistentRead: true }))
+  }
   async function readWorldState() {
     const result = await client.send(new GetCommand({ TableName: tableName(), Key: { worldId: 'manta-demo', entityId: 'STATE' }, ConsistentRead: true }))
     if (!result.Item) return null
@@ -62,17 +66,20 @@ function createStore(client = dynamoDb, table = () => process.env.WORLD_STATE_TA
       entityId: `ROUTE#${sessionId}#${survivorId}`, expiresAt: Math.floor(Date.now() / 1000) + 3600 } }))
   }
   async function prepareStoredWorldState(map, payload) {
+    const { createInitialState, prepareWorld } = require('./engine')
     const current = await getOrCreateWorldState(() => createInitialState(map))
     if (current.phase === 'DECIDING') return current
     if (payload.expectedTurn !== undefined && payload.expectedTurn !== current.turn) throw stale()
     return saveState(prepareWorld(current, map, payload.cityEvent), current)
   }
   async function resolveStoredWorldState(map, payload) {
+    const { resolveWorld } = require('./engine')
     const current = await readWorldState()
     if (!current || current.phase !== 'DECIDING' || payload.turnToken !== current.turnToken) throw stale()
     return saveState(resolveWorld(current, map, payload.decisions, { turnDurationMs: payload.turnDurationMs }), current)
   }
   async function resetStoredWorldState(map, payload) {
+    const { ROUND_COUNTS, createInitialState } = require('./engine')
     const round = payload.round ?? 1
     if (!ROUND_COUNTS[round] || !Number.isInteger(round) || (payload.pro !== undefined && typeof payload.pro !== 'boolean')
       || (payload.runnerContactBites !== undefined && typeof payload.runnerContactBites !== 'boolean')
@@ -83,7 +90,7 @@ function createStore(client = dynamoDb, table = () => process.env.WORLD_STATE_TA
     return saveState(createInitialState(map, 'manta-demo', ROUND_COUNTS[round], { round, pro: payload.pro,
       runnerContactBites: payload.runnerContactBites, refugeCapacities: payload.refugeCapacities }), current)
   }
-  return { getOrCreateWorldState, readWorldState, readRouteCache, writeRouteCache,
+  return { initializeConnection, getOrCreateWorldState, readWorldState, readRouteCache, writeRouteCache,
     prepareStoredWorldState, resolveStoredWorldState, resetStoredWorldState }
 }
 module.exports = { createStore, ...createStore() }

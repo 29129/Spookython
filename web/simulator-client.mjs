@@ -17,12 +17,21 @@ export async function requestStep(baseUrl, apiKey, survivor, turn, fetchImpl = f
       body: JSON.stringify({ sobrevivienteId: survivor.id, nodoActual: survivor.nodeId, turno: turn }) })
     const body = await response.json()
     const durationMs = performance.now() - started
+    const serverDuration = response.headers.get('x-app-duration-ms')
+    const serverDurationMs = serverDuration === null ? null : Number(serverDuration)
     return { survivorId: survivor.id, siguienteNodo: response.ok ? body.siguienteNodo : survivor.nodeId,
       durationMs, error: !response.ok || typeof body.siguienteNodo !== 'string', timedOut: durationMs > 500,
+      serverDurationMs: Number.isFinite(serverDurationMs) && serverDurationMs >= 0 ? serverDurationMs : null,
+      firstInvocation: response.headers.get('x-first-invocation') === null ? null : response.headers.get('x-first-invocation') === 'true',
+      lambdaMemoryMb: Number(response.headers.get('x-lambda-memory-mb')) || null,
+      initializationType: response.headers.get('x-lambda-init-type'),
+      lambdaQualifier: response.headers.get('x-lambda-qualifier'),
+      errorCode: typeof body.code === 'string' ? body.code : null,
       httpStatus: response.status }
   } catch (error) {
     return { survivorId: survivor.id, siguienteNodo: survivor.nodeId, durationMs: performance.now() - started,
-      timedOut: controller.signal.aborted, error: !controller.signal.aborted, httpStatus: 0 }
+      timedOut: controller.signal.aborted, error: !controller.signal.aborted, httpStatus: 0,
+      errorCode: controller.signal.aborted ? 'CLIENT_ABORT' : 'CLIENT_NETWORK' }
   } finally { clearTimeout(deadline) }
 }
 

@@ -1,0 +1,573 @@
+{
+  "generatedAt": "2026-10-28T03:06:48.691Z",
+  "source": "HTTP real desde el equipo que ejecuta el script; no mide solo el algoritmo.",
+  "baseUrl": "https://gkzb014d54.execute-api.us-east-1.amazonaws.com",
+  "pro": false,
+  "runnerContactBites": false,
+  "accelerated": true,
+  "maxTurns": 12,
+  "telemetryNote": "Handler excluye inicialización, API Gateway y red. Solo respuestas recibidas aportan telemetría; no describe las peticiones abortadas. firstInvocation no mide Init Duration.",
+  "concurrencyLimit": null,
+  "rubric": {
+    "weightedSurvivalPercent": null,
+    "fullProtocol": false,
+    "allLatencyBands10": false,
+    "allAvailabilityBands10": false,
+    "finalScore": null,
+    "note": "No se inventa una nota final: la captura no detalla la conversión de supervivencia y eficiencia a notas ni cómo agregar latencia entre rondas. Los umbrales se muestran por ronda. Tener protocolo completo no garantiza 10 ni aprueba la cadencia."
+  },
+  "loadMode": "FULL_CONCURRENCY",
+  "deadlineMs": 500,
+  "targetTurnMs": 2000,
+  "rounds": [
+    {
+      "round": 3,
+      "pro": false,
+      "survivorCount": 200,
+      "actualDurationSeconds": 12.39,
+      "turns": 12,
+      "completed": false,
+      "rescued": 135,
+      "bitten": 3,
+      "activeAtEnd": 62,
+      "survivalPercent": 98.5,
+      "meanRouteEfficiencyPercent": 72.54,
+      "calls": 1820,
+      "maxConcurrentRequests": 200,
+      "p95HttpMs": 514.36,
+      "maxHttpMs": 558.58,
+      "p95QueueMs": 24.43,
+      "p95QueuePlusHttpMs": 523.16,
+      "httpStatuses": {
+        "0": 195,
+        "200": 1625
+      },
+      "handlerMeasurementsReceived": 1625,
+      "p95HandlerMsReceived": 64.08,
+      "firstInvocationsWithResponse": 5,
+      "observedMemoryMb": [
+        512
+      ],
+      "timeouts": 195,
+      "errors": 0,
+      "errorOrTimeoutPercent": 10.714285714285714,
+      "latencyBandScore": 0,
+      "availabilityBandScore": 0,
+      "rescuedPercent": 67.5,
+      "invalidMoves": 0,
+      "slowTurns": 0,
+      "allCallsWithinDeadline": false,
+      "allTurnsWithinCadence": true,
+      "refugeOverflow": false,
+      "failure": null,
+      "turnDiagnostics": [
+        {
+          "turn": 1,
+          "calls": 200,
+          "timeouts": 195,
+          "errors": 0,
+          "p95HttpMs": 558.34,
+          "p95HandlerMsReceived": 35,
+          "durationMs": 1380.24,
+          "active": 196,
+          "waitingWithoutRoute": 1
+        },
+        {
+          "turn": 2,
+          "calls": 196,
+          "timeouts": 0,
+          "errors": 0,
+          "p95HttpMs": 235.68,
+          "p95HandlerMsReceived": 104.8,
+          "durationMs": 1659.93,
+          "active": 193,
+          "waitingWithoutRoute": 0
+        },
+        {
+          "turn": 3,
+          "calls": 193,
+          "timeouts": 0,
+          "errors": 0,
+          "p95HttpMs": 183.92,
+          "p95HandlerMsReceived": 40.44,
+          "durationMs": 1085.64,
+          "active": 187,
+          "waitingWithoutRoute": 0
+        },
+        {
+          "turn": 4,
+          "calls": 187,
+          "timeouts": 0,
+          "errors": 0,
+          "p95HttpMs": 185.93,
+          "p95HandlerMsReceived": 29.3,
+          "durationMs": 1052.57,
+          "active": 179,
+          "waitingWithoutRoute": 0
+        },
+        {
+          "turn": 5,
+          "calls": 179,
+          "timeouts": 0,
+          "errors": 0,
+          "p95HttpMs": 224,
+          "p95HandlerMsReceived": 28.97,
+          "durationMs": 1164.05,
+          "active": 171,
+          "waitingWithoutRoute": 0
+        },
+        {
+          "turn": 6,
+          "calls": 171,
+          "timeouts": 0,
+          "errors": 0,
+          "p95HttpMs": 166.33,
+          "p95HandlerMsReceived": 40.99,
+          "durationMs": 904.13,
+          "active": 155,
+          "waitingWithoutRoute": 0
+        },
+        {
+          "turn": 7,
+          "calls": 155,
+          "timeouts": 0,
+          "errors": 0,
+          "p95HttpMs": 149.33,
+          "p95HandlerMsReceived": 27.68,
+          "durationMs": 812.43,
+          "active": 139,
+          "waitingWithoutRoute": 0
+        },
+        {
+          "turn": 8,
+          "calls": 139,
+          "timeouts": 0,
+          "errors": 0,
+          "p95HttpMs": 166.86,
+          "p95HandlerMsReceived": 39.05,
+          "durationMs": 853.72,
+          "active": 120,
+          "waitingWithoutRoute": 0
+        },
+        {
+          "turn": 9,
+          "calls": 120,
+          "timeouts": 0,
+          "errors": 0,
+          "p95HttpMs": 164.84,
+          "p95HandlerMsReceived": 34.34,
+          "durationMs": 898.84,
+          "active": 107,
+          "waitingWithoutRoute": 0
+        },
+        {
+          "turn": 10,
+          "calls": 107,
+          "timeouts": 0,
+          "errors": 0,
+          "p95HttpMs": 153.22,
+          "p95HandlerMsReceived": 39.03,
+          "durationMs": 996.2,
+          "active": 96,
+          "waitingWithoutRoute": 0
+        },
+        {
+          "turn": 11,
+          "calls": 96,
+          "timeouts": 0,
+          "errors": 0,
+          "p95HttpMs": 146.1,
+          "p95HandlerMsReceived": 23.86,
+          "durationMs": 769.32,
+          "active": 77,
+          "waitingWithoutRoute": 0
+        },
+        {
+          "turn": 12,
+          "calls": 77,
+          "timeouts": 0,
+          "errors": 0,
+          "p95HttpMs": 129.18,
+          "p95HandlerMsReceived": 15.89,
+          "durationMs": 787.93,
+          "active": 62,
+          "waitingWithoutRoute": 0
+        }
+      ],
+      "unrescuedSurvivors": [
+        {
+          "id": "S-0061",
+          "nodeId": "osm:365234338",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0066",
+          "nodeId": "osm:4131814266",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0078",
+          "nodeId": "osm:363647547",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0079",
+          "nodeId": "osm:363647547",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0080",
+          "nodeId": "osm:382216213",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0081",
+          "nodeId": "osm:382216213",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0088",
+          "nodeId": "osm:4131814272",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0089",
+          "nodeId": "osm:4131814272",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0093",
+          "nodeId": "osm:11991192652",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0094",
+          "nodeId": "osm:363647547",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0104",
+          "nodeId": "osm:363647535",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0105",
+          "nodeId": "osm:363647547",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0106",
+          "nodeId": "osm:363647535",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0108",
+          "nodeId": "osm:365234338",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0114",
+          "nodeId": "osm:4138239002",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0115",
+          "nodeId": "osm:4138239002",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0122",
+          "nodeId": "osm:363648600",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0123",
+          "nodeId": "osm:4131814272",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0124",
+          "nodeId": "osm:4131814272",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0125",
+          "nodeId": "osm:4131814272",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0132",
+          "nodeId": "osm:363647547",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0133",
+          "nodeId": "osm:363647547",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0134",
+          "nodeId": "osm:367838663",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0135",
+          "nodeId": "osm:363648725",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0136",
+          "nodeId": "osm:4135769939",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0137",
+          "nodeId": "osm:382216213",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0142",
+          "nodeId": "osm:363647517",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0146",
+          "nodeId": "osm:363648600",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0147",
+          "nodeId": "osm:4131814274",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0152",
+          "nodeId": "osm:363647547",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0153",
+          "nodeId": "osm:367838663",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0154",
+          "nodeId": "osm:367838719",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0155",
+          "nodeId": "osm:4131814266",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0156",
+          "nodeId": "osm:4131814266",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0157",
+          "nodeId": "osm:4131814266",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0158",
+          "nodeId": "osm:4131814266",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0159",
+          "nodeId": "osm:4131814272",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0160",
+          "nodeId": "osm:4131814272",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0164",
+          "nodeId": "osm:367838663",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0165",
+          "nodeId": "osm:363648725",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0166",
+          "nodeId": "osm:363648725",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0167",
+          "nodeId": "osm:363648725",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0168",
+          "nodeId": "osm:363647576",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0169",
+          "nodeId": "osm:4135769939",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0178",
+          "nodeId": "osm:4138239002",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0180",
+          "nodeId": "osm:6352840795",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0182",
+          "nodeId": "osm:4131814274",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0183",
+          "nodeId": "osm:4131814274",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0184",
+          "nodeId": "osm:4131814274",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0185",
+          "nodeId": "osm:11991192652",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0187",
+          "nodeId": "osm:363647271",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0188",
+          "nodeId": "osm:363647271",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0189",
+          "nodeId": "osm:363647271",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0192",
+          "nodeId": "osm:11991192652",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0193",
+          "nodeId": "osm:10993954303",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0194",
+          "nodeId": "osm:4138239002",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0195",
+          "nodeId": "osm:4138239002",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0196",
+          "nodeId": "osm:363647517",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0197",
+          "nodeId": "osm:4138239002",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0198",
+          "nodeId": "osm:10993954303",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0199",
+          "nodeId": "osm:10993954303",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        },
+        {
+          "id": "S-0200",
+          "nodeId": "osm:10993954303",
+          "status": "ACTIVE",
+          "hasPlannedRoute": true
+        }
+      ]
+    }
+  ]
+}
